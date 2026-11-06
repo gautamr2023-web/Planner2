@@ -1,0 +1,1750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ECEEF2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1218" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Plan study days, tests and marks for JEE Mains.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JEE Planner">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>JEE Mains Planner</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
+<style>
+/* Layout: slim top bar with the exam countdown; calendar (month / week / day) on the left, a sticky day panel on the right.
+   Study hours are drawn as OMR-sheet bubbles: 14 per day, bubbles 12-14 ringed as the target zone. Everything else stays quiet. */
+:root{
+  --bg:#ECEEF2; --surface:#FFFFFF; --surface-2:#F4F5F8; --ink:#12161E; --ink-2:#464E5E; --ink-3:#6B7385;
+  --line:#DCE0E8; --line-strong:#B2B9C7;
+  --s-p:#2F6FDE; --s-c:#C25A00; --s-m:#7B45C9; --s-t:#12161E; --s-r:#8A92A3;
+  --on-sub:#FFFFFF; --ok:#13744B; --over:#C42B2B;
+  --plan:color-mix(in srgb,var(--ink) 26%,transparent);
+  --over-fill:color-mix(in srgb,var(--over) 62%,transparent);
+  --shadow:0 2px 4px rgba(18,22,30,.08),0 14px 40px rgba(18,22,30,.18);
+  --font:'Archivo','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1117; --surface:#161A22; --surface-2:#1C212B; --ink:#E8EBF2; --ink-2:#AAB2C2; --ink-3:#8590A3;
+    --line:#272D39; --line-strong:#3B4352;
+    --s-p:#4A8FEB; --s-c:#E0672C; --s-m:#9085E9; --s-t:#E8EBF2; --s-r:#8590A3;
+    --on-sub:#0B0E14; --ok:#46C58B; --over:#FF7A7A;
+    --shadow:0 2px 4px rgba(0,0,0,.4),0 14px 40px rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1117; --surface:#161A22; --surface-2:#1C212B; --ink:#E8EBF2; --ink-2:#AAB2C2; --ink-3:#8590A3;
+  --line:#272D39; --line-strong:#3B4352;
+  --s-p:#4A8FEB; --s-c:#E0672C; --s-m:#9085E9; --s-t:#E8EBF2; --s-r:#8590A3;
+  --on-sub:#0B0E14; --ok:#46C58B; --over:#FF7A7A;
+  --shadow:0 2px 4px rgba(0,0,0,.4),0 14px 40px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.app{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+.k-P{--k:var(--s-p)} .k-C{--k:var(--s-c)} .k-M{--k:var(--s-m)} .k-T{--k:var(--s-t)} .k-R{--k:var(--s-r)} .k-O{--k:var(--ink-3)}
+.chip{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--k);color:var(--on-sub);font-weight:800;font-size:11px;flex:none;line-height:1}
+.k-R .chip{background:transparent;border:1.5px dashed var(--s-r);color:var(--ink-3)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-stretch:75%;font-weight:800;font-size:24px;letter-spacing:-.01em;margin-right:auto;line-height:1.1}
+.logo{display:flex;gap:3px} .logo i{width:11px;height:11px;border-radius:50%;background:var(--k);display:block}
+.count{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 16px 8px 12px;text-align:left}
+.count b{font-stretch:62%;font-weight:800;font-size:40px;line-height:1;letter-spacing:-.01em;min-width:2ch;text-align:right}
+.count .ct2{display:flex;flex-direction:column;font-size:12px;color:var(--ink-2);line-height:1.35}
+.count strong{color:var(--ink);font-weight:600;font-size:13px}
+.meter{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin:4px 0 2px;width:100%;min-width:140px}
+.meter i{display:block;height:100%;background:var(--ink)}
+.save{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)}
+.save.link{background:none;border:0;padding:4px 0;cursor:pointer;font:inherit;font-size:12px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.save i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);display:block}
+.save.ok i{background:var(--ok)} .save.err i{background:var(--over)}
+.ib{width:36px;height:36px;display:inline-grid;place-items:center;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:0}
+.ib svg{width:18px;height:18px}
+
+.banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;border:1px dashed var(--line-strong);border-radius:10px;padding:10px 14px;background:var(--surface);color:var(--ink-2)}
+.banner span{flex:1 1 260px}
+
+/* controls */
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 14px;font-weight:600;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.nav{display:flex;align-items:center;gap:6px}
+.nav h2{margin:0 8px;font-size:22px;font-stretch:75%;font-weight:700;line-height:1.1;min-width:11ch;text-align:center}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;line-height:1.2}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.danger{color:var(--over)}
+.btn[aria-expanded="true"]{background:var(--surface-2);border-color:var(--ink-2)}
+.sp{flex:1}
+.ctl .sp{min-width:0}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.main{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (min-width:1040px){
+  .layout{grid-template-columns:minmax(0,1fr) 372px}
+  #panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain}
+}
+
+/* summary strip */
+.sum{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.stat{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stat b{font-stretch:75%;font-weight:700;font-size:26px;line-height:1.1}
+.stat span{font-size:12px;color:var(--ink-2)}
+.split{flex:1 1 260px;min-width:220px}
+.splitbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.splitbar i{display:block;height:100%;background:var(--k)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--k);display:inline-block}
+
+/* bubbles */
+.bub{display:grid;grid-template-columns:repeat(var(--n,14),minmax(0,1fr));gap:4px}
+.bub i{display:block;aspect-ratio:1;border-radius:50%;border:1.5px solid var(--line-strong);
+  background:linear-gradient(to top,var(--ink) calc(var(--d)*1%),transparent 0),linear-gradient(to top,var(--plan) calc(var(--p)*1%),transparent 0)}
+.bub i.tz{border-color:var(--ink-2)}
+.bub.over i{border-color:var(--over);background:linear-gradient(to top,var(--ink) calc(var(--d)*1%),transparent 0),var(--over-fill)}
+.bnum{display:grid;grid-template-columns:repeat(var(--n,14),minmax(0,1fr));gap:4px;margin-top:3px;font-size:10px;color:var(--ink-3);text-align:center}
+.bnum span.tz{color:var(--ink);font-weight:700}
+
+/* shared blocks */
+.blk{background:color-mix(in srgb,var(--k) 15%,var(--surface));border:1px solid color-mix(in srgb,var(--k) 45%,var(--surface));border-radius:8px;color:var(--ink)}
+.k-T.blk{background:var(--s-t);border-color:var(--s-t);color:var(--on-sub)}
+.k-T.blk .chip{background:var(--on-sub);color:var(--s-t)}
+.k-R.blk{background:transparent;border:1px dashed var(--line-strong)}
+.blk.done{opacity:.6}
+.blk.done .cbody b{text-decoration:line-through}
+.cbody{flex:1;min-width:0;background:none;border:0;padding:0;text-align:left;color:inherit}
+.cbody b{display:block;font-weight:600;font-size:13px;line-height:1.25;overflow-wrap:anywhere}
+.cbody small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:1px}
+.chk{width:22px;height:22px;flex:none;border-radius:50%;border:1.5px solid currentColor;background:none;padding:0;display:inline-grid;place-items:center;opacity:.7;color:inherit}
+.chk svg{width:12px;height:12px;opacity:0}
+.chk.on{background:var(--ink);border-color:var(--ink);color:var(--bg);opacity:1}
+.k-T .chk.on{background:var(--on-sub);border-color:var(--on-sub);color:var(--s-t)}
+.chk.on svg{opacity:1}
+
+/* calendar shell */
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mh{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line);background:var(--surface-2)}
+.mh span{padding:8px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line)}
+.cell{position:relative;display:flex;flex-direction:column;gap:6px;min-height:106px;padding:7px 8px;border:0;border-radius:0;background:var(--surface);text-align:left;min-width:0}
+.cell:hover{background:var(--surface-2)}
+.cell.out{background:var(--surface-2);color:var(--ink-3)}
+.cell.out .bub{opacity:.55}
+.cell.sel{outline:2px solid var(--ink);outline-offset:-2px;z-index:1}
+.drop{background:color-mix(in srgb,var(--ink) 10%,var(--surface)) !important}
+.cell .bub{grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cell .bub i{border-width:1px}
+.ct{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.dn{font-weight:700;font-size:14px;min-width:24px;height:24px;display:inline-grid;place-items:center;border-radius:12px;padding:0 5px}
+.cell.today .dn{background:var(--ink);color:var(--bg)}
+.hrs{font-size:12px;font-weight:600;color:var(--ink-2)}
+.hrs.ok{color:var(--ok)} .hrs.over{color:var(--over)}
+.cf{margin-top:auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 4px;font-size:11px;color:var(--ink-3);min-height:15px}
+.cf .hm{display:none}
+.tag{font-weight:700;background:var(--ink);color:var(--bg);border-radius:3px;padding:0 5px;font-style:normal;font-size:10px;line-height:15px}
+@media (max-width:640px){
+  .cell{min-height:80px;padding:4px;gap:4px}
+  .cell .bub{gap:2px}
+  .cf .cnt{display:none}
+  .ct .hrs{display:none}
+  .cf .hm{display:inline;font-size:10.5px}
+  .dn{font-size:12px;min-width:20px;height:20px;padding:0 3px}
+  .mh span{padding:6px 4px;font-size:11px}
+  .nav h2{font-size:18px;min-width:9ch}
+  .count b{font-size:34px}
+  .tag{font-size:9px;padding:0 3px}
+}
+
+/* week */
+.wk{overflow-x:auto}
+.wg{display:grid;grid-template-columns:repeat(7,minmax(168px,1fr));gap:1px;background:var(--line);min-width:min-content}
+.wc{background:var(--surface);display:flex;flex-direction:column;min-height:440px;min-width:0}
+.wc.sel{box-shadow:inset 0 3px 0 var(--ink)}
+.wh{display:flex;flex-direction:column;gap:7px;padding:10px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%}
+.wh .row1{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.wh b{font-stretch:75%;font-size:18px;font-weight:700}
+.wc.today .wh b{background:var(--ink);color:var(--bg);border-radius:6px;padding:0 7px}
+.wh .bub{grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.wh .bub i{border-width:1px}
+.wl{display:flex;flex-direction:column;gap:6px;padding:8px;flex:1}
+.wcard{display:flex;gap:7px;align-items:flex-start;padding:7px 8px}
+.wcard[draggable="true"]{cursor:grab}
+.wadd{margin-top:auto;border:1px dashed var(--line-strong);background:none;border-radius:8px;padding:6px;color:var(--ink-2);font-weight:600;font-size:12px}
+.dragging{opacity:.45}
+
+/* day timeline */
+.tlw{max-height:min(76vh,800px);overflow-y:auto;overscroll-behavior:contain}
+.tli{position:relative;margin:14px 12px 14px 0}
+.hl{position:absolute;left:56px;right:0;border-top:1px solid var(--line);height:0}
+.hl span{position:absolute;left:-56px;top:-8px;width:46px;text-align:right;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.tbs{position:absolute;left:60px;right:0;top:0;bottom:0}
+.tb{position:absolute;display:flex;align-items:flex-start;gap:6px;padding:4px 6px 4px 4px;overflow:hidden;user-select:none;-webkit-user-select:none;cursor:grab}
+.tb.sm .cbody small,.tb.xs .cbody small{display:none}
+.tb.sm{align-items:center;padding-block:1px}
+.tb.sm .chip{width:16px;height:16px;font-size:10px}
+.tb.sm .chk{width:16px;height:16px} .tb.sm .chk svg{width:9px;height:9px}
+.tb.sm .grip,.tb.xs .grip{align-self:center;height:12px}
+.tb.sm .rs,.tb.xs .rs{height:6px} .tb.sm .rs::after,.tb.xs .rs::after{display:none}
+.tb.xs{align-items:center;padding-block:0}
+.tb.xs .chip,.tb.xs .chk{display:none}
+.tb.xs .cbody b{font-size:11px;line-height:12px}
+.tb.dragging-now{box-shadow:var(--shadow);z-index:5;opacity:.95}
+.grip{flex:none;width:12px;align-self:stretch;display:flex;align-items:center;justify-content:center;touch-action:none;opacity:.5;cursor:grab}
+.grip::before{content:"";width:6px;height:16px;background:radial-gradient(circle,currentColor 1.1px,transparent 1.4px) 0 0/6px 6px}
+.rs{position:absolute;left:0;right:0;bottom:0;height:9px;cursor:ns-resize;touch-action:none}
+.rs::after{content:"";position:absolute;left:50%;bottom:2px;width:22px;height:3px;border-radius:2px;background:currentColor;opacity:.35;transform:translateX(-50%)}
+.now{position:absolute;left:50px;right:0;border-top:2px solid var(--ink);z-index:4;pointer-events:none}
+.now::before{content:"";position:absolute;left:-1px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--ink)}
+.tl-empty{position:absolute;left:76px;right:20px;top:2.5em;color:var(--ink-2);pointer-events:none;max-width:46ch}
+
+/* day panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.ps{padding:14px 16px;border-top:1px solid var(--line)}
+.ps:first-child{border-top:0}
+.ps h4{margin:0 0 8px;font-size:12px;font-weight:700;color:var(--ink-2)}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ph h3{margin:0;font-stretch:75%;font-weight:800;font-size:32px;line-height:1;letter-spacing:-.01em}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pill{font-size:12px;font-weight:600;border:1px solid var(--line-strong);border-radius:999px;padding:1px 9px;color:var(--ink-2);line-height:1.5}
+.pill.ok{color:var(--ok);border-color:currentColor} .pill.over{color:var(--over);border-color:currentColor}
+.link{border:0;background:none;padding:0;color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:600}
+.gl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 10px;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.gl b{color:var(--ink);font-weight:700}
+.bud{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.bud i{display:block;height:100%;background:var(--k)}
+.bud i.rest{background:var(--s-r);opacity:.55}
+.bud i.sleep{background:repeating-linear-gradient(135deg,var(--ink-3) 0 2px,transparent 2px 5px)}
+.budl{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:12px;color:var(--ink-2);margin-top:7px}
+.budl b{color:var(--ink)} .budl .over,.budl .over b{color:var(--over)}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.menu{display:flex;flex-direction:column;gap:6px;margin-top:10px;padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
+.menu p{margin:0;font-size:13px;color:var(--ink-2)}
+.menu .acts{margin-top:2px}
+.lst{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px}
+.row[draggable="true"]{cursor:grab}
+.empty{margin:0;color:var(--ink-2);font-size:13px;max-width:44ch}
+.hint{margin:10px 0 0;font-size:12px;color:var(--ink-3)}
+
+/* overlays */
+.scrim{position:fixed;inset:0;background:rgba(8,10,16,.5);z-index:50}
+.sheet{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;box-shadow:var(--shadow);padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px}
+.sheet h3{margin:0;font-stretch:75%;font-weight:800;font-size:24px;line-height:1.1}
+.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--ink-2);min-width:0}
+.f small{font-weight:400;color:var(--ink-3);font-size:12px;line-height:1.4}
+.f input,.f select{height:38px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 10px;font-size:14px;color:var(--ink);min-width:0;width:100%}
+.f input:disabled{opacity:.45}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:480px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kinds{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.kinds legend{font-size:12px;font-weight:600;color:var(--ink-2);padding:0;margin-bottom:6px}
+.kopt{position:relative}
+.kopt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.kb{display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:999px;padding:4px 12px 4px 5px;font-weight:600;font-size:13px;color:var(--ink)}
+.kopt input:checked+.kb{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.kopt input:checked+.kb .chip{box-shadow:0 0 0 2px var(--bg)}
+.kopt input:focus-visible+.kb{outline:2px solid var(--ink);outline-offset:2px}
+.cb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+.cb input{width:16px;height:16px;margin:0}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px}
+
+.toastw{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;max-width:calc(100% - 32px)}
+.toast{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 12px 10px 16px;box-shadow:var(--shadow);font-weight:500}
+.toast button{border:1px solid color-mix(in srgb,var(--bg) 60%,transparent);background:none;color:var(--bg);border-radius:6px;padding:3px 10px;font-weight:700}
+/* tests view */
+.cal.plain{background:none;border:0;border-radius:0;overflow:visible;display:flex;flex-direction:column;gap:12px}
+@media (min-width:1040px){.layout.nopanel{grid-template-columns:minmax(0,1fr)}}
+.th{margin:0 6px;font-size:22px;font-stretch:75%;font-weight:700;line-height:1.1}
+.ctl2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.card>header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:10px}
+.card h3{margin:0;font-size:15px;font-weight:700}
+.card h3 small{font-weight:500;color:var(--ink-2);font-size:12px;margin-left:8px}
+.up{color:var(--ok);font-weight:700} .dn2{color:var(--over);font-weight:700}
+.lgs{display:flex;flex-wrap:wrap;gap:6px}
+.s-tot{--c:var(--ink)} .s-P{--c:var(--s-p)} .s-C{--c:var(--s-c)} .s-M{--c:var(--s-m)}
+.lg{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:3px 12px 3px 9px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.lg[aria-pressed="true"]{color:var(--ink);border-color:var(--ink-2);background:var(--surface-2)}
+.lg .key{width:14px;height:2px;border-radius:1px;background:var(--c);display:inline-block}
+.lg[aria-pressed="false"] .key{opacity:.35}
+.plot{position:relative;width:100%;height:250px;touch-action:pan-y;border-radius:6px}
+.plot svg{display:block;max-width:100%;overflow:visible}
+.plot .gl{stroke:var(--line);stroke-width:1}
+.plot .ax{fill:var(--ink-3);font:11px var(--font);font-variant-numeric:tabular-nums}
+.plot .lbl{fill:var(--ink-2);font:600 11px var(--font);font-variant-numeric:tabular-nums}
+.plot .ln{fill:none;stroke:var(--c);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.plot .mk{fill:var(--c);stroke:var(--surface);stroke-width:2}
+.plot .xh{stroke:var(--ink-3);stroke-width:1}
+.plot-empty{display:grid;place-items:center;min-height:150px;color:var(--ink-2);text-align:center;padding:0 12px;max-width:52ch;margin:0 auto}
+.tip{position:absolute;z-index:5;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow);padding:8px 10px;min-width:150px;max-width:230px;font-size:12px}
+.tip-h{color:var(--ink-2);margin-bottom:6px;line-height:1.3;overflow-wrap:anywhere}
+.tip-h b{display:block;color:var(--ink);font-weight:600}
+.tip-r{display:flex;align-items:center;gap:8px;padding:1px 0}
+.tip-r .key{width:12px;height:2px;border-radius:1px;background:var(--c);flex:none}
+.tip-r .tl{flex:1;color:var(--ink-2)}
+.tip-r b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.tw{overflow-x:auto}
+.tt{width:100%;border-collapse:collapse;min-width:820px;font-size:13px}
+.tt th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-2);padding:6px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+.tt td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tt th.n,.tt td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tt tr.gh td{background:var(--surface-2);font-weight:700;font-size:12px;color:var(--ink-2);padding:6px 10px}
+.tt .nm{min-width:220px} .tt .nm b{display:block;font-weight:600}
+.tt .nm small,.tt .dt small{display:block;color:var(--ink-3);font-size:12px;margin-top:1px}
+.tt .dt{white-space:nowrap}
+.tt .mut,.mut{color:var(--ink-3)}
+.tt .act{white-space:nowrap;text-align:right}
+.err{margin:0;color:var(--over);font-size:13px;font-weight:600}
+.tps{display:flex;flex-direction:column;gap:2px;min-width:0;align-items:flex-start}
+.tps .tpill{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.tpill{font-size:10px;font-weight:700;border:1px solid var(--ink);border-radius:3px;padding:0 5px;line-height:14px;color:var(--ink);white-space:nowrap}
+@media (max-width:640px){.tpill{font-size:9px;padding:0 3px;line-height:13px}}
+.sheet.wide{width:min(720px,calc(100% - 24px))}
+.imp-ta{width:100%;min-height:130px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:10px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);resize:vertical}
+.f input[type="file"]{height:auto;padding:7px 8px}
+.fmt{border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--surface-2)}
+.fmt summary{cursor:pointer;font-weight:600;font-size:13px}
+.fmt .empty{margin:8px 0}
+pre.ex{margin:0 0 8px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:7px;overflow-x:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;user-select:all}
+.imp-sum{margin:0 0 6px;font-weight:700}
+.imp-list{max-height:220px;overflow-y:auto}
+.imp-row{display:flex;gap:10px;align-items:flex-start;padding:5px 2px;border-bottom:1px solid var(--line)}
+.imp-row .pill{flex:none;margin-top:1px}
+.imp-tx{min-width:0} .imp-tx b{display:block;font-weight:600;overflow-wrap:anywhere}
+.imp-tx small{display:block;color:var(--ink-3);font-size:12px;overflow-wrap:anywhere}
+.imp-row.dup{opacity:.65}
+.sheet .btn:disabled{opacity:.45;cursor:not-allowed}
+@media (max-width:640px){
+  .tw{overflow:visible}
+  .tt,.tt tbody{display:block;min-width:0}
+  .tt thead{display:none}
+  .tt tr.gh,.tt tr.gh td{display:block}
+  .tt tr:not(.gh){display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 16px;padding:10px 2px;border-bottom:1px solid var(--line)}
+  .tt td{display:block;border:0;padding:0}
+  .tt td.dt{order:0;flex:0 0 100%;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+  .tt td.dt small{margin:0}
+  .tt td.nm{order:1;flex:0 0 100%;min-width:0;margin-bottom:2px}
+  .tt td.n{order:2;display:flex;gap:5px;align-items:baseline;text-align:left;font-size:14px}
+  .tt td.n::before{content:attr(data-l);color:var(--ink-3);font-size:11px;font-weight:600}
+  .tt td.e{display:none}
+  .tt td.act{order:3;flex:0 0 100%;display:flex;gap:8px;justify-content:flex-start;margin-top:6px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<div class="app">
+  <header class="top" id="top"></header>
+  <div id="banner" hidden></div>
+  <div class="ctl" id="controls"></div>
+  <div class="layout">
+    <main class="main">
+      <div id="summary" hidden></div>
+      <section class="cal" id="cal" aria-label="Calendar"></section>
+    </main>
+    <aside class="panel" id="panel" aria-label="Selected day"></aside>
+  </div>
+</div>
+<div id="ov"></div>
+<div class="toastw" id="toast" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var pad=function(n){return String(n).padStart(2,'0')};
+var iso=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+var parse=function(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+var addDays=function(s,n){var d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
+var dow=function(s){return (parse(s).getDay()+6)%7};
+var startOfWeek=function(s){return addDays(s,-dow(s))};
+var dayDiff=function(a,b){return Math.round((parse(b)-parse(a))/864e5)};
+var clamp=function(v,a,b){return Math.min(b,Math.max(a,v))};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var uid=function(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)};
+var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MONL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var TODAY=iso(new Date());
+var shortDate=function(d){var x=parse(d);return DAYS[dow(d)]+' '+x.getDate()+' '+MON[x.getMonth()]};
+var longDate=function(d){var x=parse(d);return shortDate(d)+' '+x.getFullYear()};
+
+var SUBS={P:'Physics',C:'Chemistry',M:'Maths',O:'School subject',T:'Test',R:'Rest'};
+var STUDY_TYPES=['Theory','DPP','PYQ','Revision','Doubts','Notes'];
+var TYPES={P:STUDY_TYPES,C:STUDY_TYPES,M:STUDY_TYPES,T:['Full test','Part test','Chapter test','Full mock','Analysis','Sectional test'],R:['Meal','Break','Walk']};
+var T0=300,T1=1440,HP=48;
+var DEFAULTS={exam:'2027-01-22',min:12,max:14,sleep:6.5};
+
+/* minutes -> text */
+var hh=function(m){var h=Math.round(m/6)/10;return (h%1===0?h.toFixed(0):h.toFixed(1))+'h'};
+var dur=function(m){return m<60?m+'m':(m%60?Math.floor(m/60)+'h '+(m%60)+'m':(m/60)+'h')};
+var ap=function(m){return Math.floor(m/60)%24>=12?'pm':'am'};
+var hm=function(m){var h=Math.floor(m/60)%24;return (h%12||12)+':'+pad(m%60)};
+var clock=function(m){return hm(m)+' '+ap(m)};
+var range=function(s,e){return hm(s)+(ap(s)===ap(e)?'':' '+ap(s))+'–'+hm(e)+' '+ap(e)};
+var hourLabel=function(m){var h=Math.floor(m/60)%24;return (h%12||12)+' '+(h>=12?'pm':'am')};
+
+/* templates */
+var TEMPLATES={
+  balanced:{name:'Balanced day',items:[
+    [360,90,'P','Theory','Physics: concepts + solved examples'],
+    [450,30,'R','Meal','Breakfast'],
+    [480,150,'M','Theory','Maths: concepts + solved examples'],
+    [630,15,'R','Break','Break'],
+    [645,120,'C','Theory','Chemistry: concepts + NCERT lines'],
+    [765,60,'R','Meal','Lunch + short rest'],
+    [825,120,'P','DPP','Physics: DPP + PYQs'],
+    [945,30,'R','Walk','Walk + snack'],
+    [975,150,'M','DPP','Maths: DPP + PYQs'],
+    [1125,45,'R','Meal','Dinner'],
+    [1170,120,'C','PYQ','Chemistry: PYQs + doubts'],
+    [1290,15,'R','Break','Break'],
+    [1305,60,'M','Revision','Formula + error-log revision']]},
+  mock:{name:'Mock-test day',items:[
+    [360,90,'C','Revision','Chemistry: NCERT + formula revision'],
+    [450,30,'R','Meal','Breakfast'],
+    [510,180,'T','Full test','JEE Main full mock (3 h)',{k:'full',max:300,subs:'PCM',syl:'Full syllabus'}],
+    [690,60,'R','Meal','Lunch + rest'],
+    [750,180,'T','Analysis','Mock analysis + error log'],
+    [930,30,'R','Walk','Walk + snack'],
+    [960,150,'P','Theory','Physics: weak-topic repair'],
+    [1110,45,'R','Meal','Dinner'],
+    [1155,150,'M','DPP','Maths: weak-topic practice']]}
+};
+var tplStudy=function(k){return TEMPLATES[k].items.reduce(function(a,i){return a+(i[2]==='R'?0:i[1])},0)};
+
+/* state */
+var LS='jee-planner-v1';
+var state={v:1,updated:0,settings:Object.assign({},DEFAULTS),tasks:[]};
+var idx=new Map();
+var ui={view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
+var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0]};
+var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null}};
+var fixTest=function(t){
+  var x=t.test;
+  if(x&&(!x.k||!(x.max>0)||typeof x.subs!=='string'||!x.subs))t.test=null;
+  else if(x){x.syl=x.syl||'';x.res=x.res||null}
+  return t;
+};
+var serialize=function(){return {v:1,updated:state.updated||0,settings:state.settings,tasks:state.tasks.map(pack)}};
+function hydrate(o){
+  if(!o||o.v!==1||!Array.isArray(o.tasks)) return null;
+  var s=Object.assign({},DEFAULTS,o.settings||{});
+  var tasks=o.tasks.map(unpack).map(fixTest).filter(function(t){return SUBS[t.kind]&&t.dur>0&&t.id});
+  return {v:1,updated:+o.updated||0,settings:s,tasks:tasks};
+}
+function rebuild(){
+  idx=new Map();
+  state.tasks.forEach(function(t){if(!t.date)return;if(!idx.has(t.date))idx.set(t.date,[]);idx.get(t.date).push(t)});
+  idx.forEach(function(a){a.sort(function(x,y){return x.start-y.start||(x.id<y.id?-1:1)})});
+}
+var get=function(id){return state.tasks.find(function(t){return t.id===id})};
+var onDay=function(d){return idx.get(d)||[]};
+var bank=function(){return state.tasks.filter(function(t){return !t.date})};
+function dayStats(d){
+  var r={study:0,done:0,rest:0,n:0,nd:0,sub:{P:0,C:0,M:0,T:0}};
+  onDay(d).forEach(function(t){
+    r.n++;if(t.done)r.nd++;
+    if(t.kind==='R'){r.rest+=t.dur}else{r.study+=t.dur;r.sub[t.kind]+=t.dur;if(t.done)r.done+=t.dur}
+  });
+  return r;
+}
+function findSlot(date,d,from,exId){
+  var list=onDay(date).filter(function(t){return t.id!==exId});
+  var cur=Math.max(from||360,T0);
+  for(var i=0;i<list.length;i++){
+    var t=list[i],e=t.start+t.dur;
+    if(e<=cur)continue;
+    if(t.start-cur>=d)break;
+    cur=Math.max(cur,e);
+  }
+  if(cur+d>T1)cur=Math.max(T0,T1-d);
+  return cur;
+}
+
+/* persistence: localStorage always, account db when available */
+var dbDoc=null,saveT=0,dirty=false,busy=false,saveState='local';
+var SAVE_TXT={local:'Saved on this device only',signedout:'Not signed in · tap to sync',ready:'Syncs to your account',saving:'Saving…',synced:'Saved to your account',error:'Saved on this device · sync will retry'};
+function saveHTML(){var c=saveState==='synced'||saveState==='ready'?' ok':saveState==='error'?' err':'';
+  if(sb)return '<button type="button" class="save link" id="save" data-act="auth"><i></i>'+SAVE_TXT[saveState]+'</button>';
+  return '<span class="save'+c+'" id="save"><i></i>'+SAVE_TXT[saveState]+'</span>'}
+function setSave(s){saveState=s;var el=$('#save');if(el)el.outerHTML=saveHTML()}
+function persist(){
+  state.updated=Date.now();
+  try{localStorage.setItem(LS,JSON.stringify(serialize()))}catch(e){}
+  dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,800);
+  setSave(dbDoc?'saving':'local');
+}
+function flush(){
+  if(!dbDoc||!dirty)return;
+  if(busy){saveT=setTimeout(flush,400);return}
+  busy=true;dirty=false;
+  var body=JSON.stringify(serialize());
+  var p;
+  try{
+    if(body.length>240000)throw new Error('size');
+    p=dbDoc.set({planJson:body,savedAt:Date.now()});
+  }catch(e){p=Promise.reject(e)}
+  var failed=false;
+  p.then(function(){setSave(dirty?'saving':'synced')},function(){failed=true;dirty=true;setSave('error')}).then(function(){
+    busy=false;clearTimeout(saveT);
+    if(dirty)saveT=setTimeout(flush,failed?20000:400);
+  });
+}
+function readLS(){try{var s=localStorage.getItem(LS);return s?JSON.parse(s):null}catch(e){return null}}
+function adopt(remote){
+  state=remote;rebuild();
+  try{localStorage.setItem(LS,JSON.stringify(serialize()))}catch(e){}
+  render();
+}
+/* ---- Supabase sync ---- */
+var CFG=window.JEE_CONFIG||{},sb=null,sbUser=null,unsub=null;
+function sbConfigured(){return !!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/YOUR_/.test(CFG.supabaseUrl+CFG.supabaseAnonKey)&&window.supabase&&window.supabase.createClient)}
+function sbRef(uid){
+  return {
+    set:function(d){
+      return sb.from('planner_state').upsert({user_id:uid,plan:JSON.parse(d.planJson),updated_at:new Date().toISOString()},{onConflict:'user_id'})
+        .then(function(r){if(r.error)throw r.error});
+    },
+    onSnapshot:function(next,err){
+      var dead=false;
+      function emit(row){next({exists:!!row,data:function(){return row?{planJson:JSON.stringify(row.plan)}:{}}})}
+      function pull(){
+        return sb.from('planner_state').select('plan').eq('user_id',uid).maybeSingle().then(function(r){
+          if(dead)return;
+          if(r.error){if(err)err(r.error);return}
+          emit(r.data);
+        },function(e){if(!dead&&err)err(e)});
+      }
+      pull();
+      var ch=sb.channel('planner-'+uid).on('postgres_changes',{event:'*',schema:'public',table:'planner_state',filter:'user_id=eq.'+uid},function(p){
+        if(!dead&&p.new&&p.new.plan)emit({plan:p.new.plan});
+      }).subscribe();
+      var vis=function(){if(document.visibilityState==='visible')pull()};
+      document.addEventListener('visibilitychange',vis);window.addEventListener('online',pull);
+      var poll=setInterval(vis,30000);
+      return function(){dead=true;try{sb.removeChannel(ch)}catch(e){}document.removeEventListener('visibilitychange',vis);window.removeEventListener('online',pull);clearInterval(poll)};
+    }
+  };
+}
+function startSync(uid){
+  stopSync();
+  var ref=sbRef(uid),first=true;
+  setSave('saving');
+  unsub=ref.onSnapshot(function(snap){
+    var remote=null;
+    if(snap.exists){try{remote=hydrate(JSON.parse((snap.data()||{}).planJson))}catch(x){remote=null}}
+    if(first){
+      first=false;dbDoc=ref;
+      if(remote&&!dirty&&(remote.updated>=state.updated||!hadLocal)){adopt(remote);setSave('synced')}
+      else if(dirty||hadLocal){if(!state.updated)state.updated=Date.now();dirty=true;flush()}
+      else setSave('ready');
+      return;
+    }
+    if(remote&&remote.updated>state.updated&&!dirty&&!busy){adopt(remote);setSave('synced')}
+    else if(saveState==='error'&&!dirty)setSave('synced');
+  },function(){setSave('error')});
+}
+function stopSync(){if(unsub){unsub();unsub=null}dbDoc=null}
+function connect(){
+  if(!sbConfigured())return;
+  sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sb.auth.onAuthStateChange(function(ev,session){
+    var u=session&&session.user;
+    if(u&&(!sbUser||sbUser.id!==u.id)){sbUser=u;startSync(u.id);if(ui.overlay&&ui.overlay.kind==='auth')closeOv()}
+    else if(!u&&sbUser){sbUser=null;stopSync();setSave('signedout')}
+  });
+  sb.auth.getSession().then(function(r){if(!(r&&r.data&&r.data.session)&&!sbUser)setSave('signedout')});
+  window.addEventListener('online',function(){if(dbDoc){dirty=true;flush()}});
+}
+function openAuth(){
+  ui.overlay={kind:'auth'};
+  if(sbUser){
+    openOv('<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="afh"><h3 id="afh">Your account</h3>'+
+      '<p style="margin:0">Signed in as <b>'+esc(sbUser.email||'')+'</b>. '+esc(SAVE_TXT[saveState])+'.</p>'+
+      '<div class="actions"><button type="button" class="btn" data-act="sync-now">Sync now</button><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Close</button><button type="button" class="btn danger" data-act="sign-out">Sign out</button></div>'+
+      '<small style="color:var(--ink-3)">Signing out also clears the copy stored on this device. Your plan stays in your account.</small></div>');
+    return;
+  }
+  openOv('<form class="sheet" id="af" role="dialog" aria-modal="true" aria-labelledby="afh">'+
+    '<h3 id="afh">Sign in to sync</h3>'+
+    '<p style="margin:0;color:var(--ink-2)">One account keeps your plan the same on your phone and laptop.</p>'+
+    '<label class="f">Email<input type="email" name="email" id="af-email" autocomplete="email" required></label>'+
+    '<label class="f">Password<input type="password" name="password" autocomplete="current-password" minlength="6"><small>At least 6 characters. Not needed for the email link.</small></label>'+
+    '<p class="err" id="af-msg" role="status" hidden></p>'+
+    '<div class="actions"><button type="button" class="btn" data-act="auth-magic">Email me a link</button><span class="sp"></span><button type="button" class="btn" data-act="auth-signup">Create account</button><button type="submit" class="btn pri">Sign in</button></div></form>','#af-email');
+}
+function authMsg(t,ok){var m=$('#af-msg');if(!m)return;m.hidden=!t;m.textContent=t||'';m.style.color=ok?'var(--ok)':''}
+function authDo(kind){
+  var f=$('#af');if(!f||!sb)return;
+  var email=f.email.value.trim(),pw=f.password.value;
+  if(!email){authMsg('Enter your email.');return}
+  var p;
+  if(kind==='magic')p=sb.auth.signInWithOtp({email:email,options:{emailRedirectTo:location.href.split('#')[0]}});
+  else{
+    if(pw.length<6){authMsg('Password needs at least 6 characters.');return}
+    p=kind==='signup'?sb.auth.signUp({email:email,password:pw,options:{emailRedirectTo:location.href.split('#')[0]}}):sb.auth.signInWithPassword({email:email,password:pw});
+  }
+  authMsg('Working…',true);
+  p.then(function(r){
+    if(r.error){authMsg(r.error.message||'Something went wrong.');return}
+    if(kind==='magic')authMsg('Check your email for the sign-in link.',true);
+    else if(kind==='signup'&&!(r.data&&r.data.session))authMsg('Account created. Check your email to confirm it, then sign in.',true);
+  },function(){authMsg('Could not reach the server. Check your connection.')});
+}
+
+/* mutations */
+function mutate(fn,msg){
+  var snap=JSON.stringify(state.tasks);
+  fn();rebuild();persist();render();
+  var m=typeof msg==='function'?msg():msg;
+  if(m)toast(m,function(){state.tasks=JSON.parse(snap);rebuild();persist();render()});
+}
+function toggleDone(id){var t=get(id);if(!t)return;t.done=!t.done;rebuild();persist();render()}
+function moveTask(id,date,minute){
+  var t=get(id);if(!t)return;
+  var was=t.date;
+  if(was===date&&minute==null)return;
+  ui.sel=date;
+  mutate(function(){
+    t.date=date;
+    if(minute!=null)t.start=minute;
+    else if(t.start==null||!was)t.start=findSlot(date,t.dur,360,t.id);
+    t.sample=false;
+  },'Moved “'+t.title+'” to '+shortDate(date));
+}
+function applyTemplate(key){
+  var tp=TEMPLATES[key],d=ui.sel;
+  ui.menu=null;ui.confirm=null;
+  mutate(function(){
+    state.tasks=state.tasks.filter(function(t){return t.date!==d});
+    tp.items.forEach(function(i){state.tasks.push({id:uid(),title:i[4],kind:i[2],type:i[3],date:d,start:i[0],dur:i[1],done:false,sample:false,test:i[5]?cloneTest(i[5]):null})});
+  },tp.name+' added to '+shortDate(d));
+}
+function copyDay(mode){
+  var src=onDay(ui.sel).slice(),targets=[],i;
+  ui.menu=null;
+  if(!src.length){toast('This day has no tasks to copy.');render();return}
+  if(mode==='next')targets=[addDays(ui.sel,1)];
+  if(mode==='week'){var end=addDays(startOfWeek(ui.sel),6);for(var d=addDays(ui.sel,1);d<=end;d=addDays(d,1))targets.push(d)}
+  if(mode==='7')for(i=1;i<=7;i++)targets.push(addDays(ui.sel,i));
+  if(!targets.length){toast('No days left in this week.');render();return}
+  var copied=0,skipped=0;
+  mutate(function(){
+    targets.forEach(function(d){
+      if(onDay(d).length){skipped++;return}
+      copied++;
+      src.forEach(function(t){state.tasks.push({id:uid(),title:t.title,kind:t.kind,type:t.type,date:d,start:t.start,dur:t.dur,done:false,sample:false,test:t.test?cloneTest(t.test):null})});
+    });
+  },function(){return copied?'Copied to '+copied+' day'+(copied>1?'s':'')+(skipped?' ('+skipped+' skipped: already planned)':''):'Nothing copied: those days already have tasks.'});
+}
+
+/* ---------- rendering ---------- */
+function bubbles(study,done,cls,nums){
+  var S=state.settings,N=Math.max(14,Math.ceil(S.max)),sh=study/60,dh=done/60,over=sh>S.max,out='',nn='';
+  for(var i=1;i<=N;i++){
+    var p=over?100:clamp(sh-(i-1),0,1)*100,d=clamp(dh-(i-1),0,1)*100,tz=i>=S.min&&i<=S.max?' class="tz"':'';
+    out+='<i'+tz+' style="--p:'+p.toFixed(0)+';--d:'+d.toFixed(0)+'"></i>';
+    if(nums)nn+='<span'+(i>=S.min&&i<=S.max?' class="tz"':'')+'>'+i+'</span>';
+  }
+  var label=hh(study)+' planned, '+hh(done)+' done, target '+S.min+' to '+S.max+' hours';
+  return '<span class="bub'+(over?' over':'')+(cls?' '+cls:'')+'" style="--n:'+N+'" role="img" aria-label="'+label+'">'+out+'</span>'+(nums?'<div class="bnum" style="--n:'+N+'" aria-hidden="true">'+nn+'</div>':'');
+}
+function loadStatus(m){
+  var S=state.settings,lo=S.min*60,hi=S.max*60;
+  if(m===0)return {cls:'',text:'Nothing planned yet'};
+  if(m<lo)return {cls:'',text:dur(lo-m)+' more to reach '+S.min+'h'};
+  if(m<=hi)return {cls:'ok',text:'In the '+S.min+'–'+S.max+'h target'};
+  return {cls:'over',text:dur(m-hi)+' over '+S.max+'h'};
+}
+function hrsClass(m){var S=state.settings;return m>S.max*60?'over':m>=S.min*60?'ok':''}
+
+function renderTop(){
+  var S=state.settings,n=dayDiff(TODAY,S.exam),planned=0;
+  idx.forEach(function(l,d){if(d>=TODAY&&d<=S.exam)l.forEach(function(t){if(t.kind!=='R')planned+=t.dur})});
+  var need=Math.max(n+1,0)*S.min*60,pct=need?Math.min(100,planned/need*100):0;
+  $('#top').innerHTML=
+   '<div class="brand"><span class="logo"><i class="k-P"></i><i class="k-C"></i><i class="k-M"></i></span>JEE Mains Planner</div>'+
+   '<button class="count" data-act="settings" aria-label="Exam date and targets">'+
+     '<b class="num">'+(n>=0?n:'—')+'</b>'+
+     '<span class="ct2"><strong>'+(n>0?'days to JEE Main':n===0?'JEE Main is today':'Exam date has passed')+'</strong>'+
+     '<span>'+longDate(S.exam)+'</span>'+
+     (n>=0?'<span class="meter" role="img" aria-label="'+Math.round(pct)+'% of target hours planned"><i style="width:'+pct.toFixed(1)+'%"></i></span><span class="num">'+hh(planned)+' of '+hh(need)+' planned at '+S.min+'h/day</span>':'')+
+     '</span></button>'+
+   saveHTML()+
+   '<button class="ib" data-act="settings" aria-label="Settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg></button>';
+}
+function renderBanner(){
+  var el=$('#banner'),has=state.tasks.some(function(t){return t.sample});
+  el.hidden=!has;
+  if(has)el.innerHTML='<div class="banner"><span>A sample plan is loaded so you can see how the planner works. Your own tasks will sit next to it.</span><button class="btn sm" data-act="clear-samples">Clear samples</button><button class="btn sm" data-act="keep-samples">Keep and edit</button></div>';
+}
+function periodLabel(){
+  var x=parse(ui.sel);
+  if(ui.view==='month')return MONL[x.getMonth()]+' '+x.getFullYear();
+  if(ui.view==='day')return longDate(ui.sel);
+  var a=startOfWeek(ui.sel),b=addDays(a,6),pa=parse(a),pb=parse(b);
+  return pa.getMonth()===pb.getMonth()?pa.getDate()+'–'+pb.getDate()+' '+MON[pb.getMonth()]+' '+pb.getFullYear():pa.getDate()+' '+MON[pa.getMonth()]+' – '+pb.getDate()+' '+MON[pb.getMonth()]+' '+pb.getFullYear();
+}
+function renderControls(){
+  var seg=['month','week','day','tests'].map(function(v){return '<button data-act="view" data-v="'+v+'" aria-pressed="'+(ui.view===v)+'">'+v[0].toUpperCase()+v.slice(1)+'</button>'}).join('');
+  var h='<div class="seg" role="group" aria-label="View">'+seg+'</div>';
+  if(ui.view==='tests')h+='<h2 class="th">Tests and results</h2><span class="sp"></span><button class="btn" data-act="import">Import schedule</button><button class="btn pri" data-act="add-test">+ Add test</button>';
+  else h+='<div class="nav"><button class="ib" data-act="prev" aria-label="Previous">\u2039</button><h2>'+periodLabel()+'</h2><button class="ib" data-act="next" aria-label="Next">\u203a</button></div>'+
+    '<button class="btn" data-act="today">Today</button><span class="sp"></span>'+
+    '<button class="btn pri" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
+  $('#controls').innerHTML=h;
+}
+function renderSummary(){
+  var el=$('#summary');
+  if(ui.view==='day'||ui.view==='tests'){el.hidden=true;el.innerHTML='';return}
+  el.hidden=false;
+  var dates=[],S=state.settings,i;
+  if(ui.view==='week'){var a=startOfWeek(ui.sel);for(i=0;i<7;i++)dates.push(addDays(a,i))}
+  else{var x=parse(ui.sel),dim=new Date(x.getFullYear(),x.getMonth()+1,0).getDate(),f=iso(new Date(x.getFullYear(),x.getMonth(),1));for(i=0;i<dim;i++)dates.push(addDays(f,i))}
+  var plan=0,done=0,inT=0,days=0,sub={P:0,C:0,M:0,T:0};
+  dates.forEach(function(d){
+    var st=dayStats(d);plan+=st.study;done+=st.done;
+    if(st.study){days++;if(st.study>=S.min*60&&st.study<=S.max*60)inT++}
+    Object.keys(sub).forEach(function(k){sub[k]+=st.sub[k]});
+  });
+  var per=ui.view==='week'?'week':'month';
+  var tgt=ui.view==='week'?'<span>Target '+(S.min*7)+'–'+(S.max*7)+'h</span>':'<span>'+days+' planned day'+(days===1?'':'s')+'</span>';
+  var splitBar=['P','C','M','T'].map(function(k){return plan?'<i class="k-'+k+'" style="width:'+(sub[k]/plan*100).toFixed(2)+'%"></i>':''}).join('');
+  var legend=['P','C','M','T'].map(function(k){return '<span class="k-'+k+'"><i class="dot"></i>'+SUBS[k]+' <b class="num">'+hh(sub[k])+'</b></span>'}).join('');
+  el.innerHTML='<div class="sum">'+
+    '<div class="stat"><b class="num">'+hh(plan)+'</b><span>Planned this '+per+'</span></div>'+
+    '<div class="stat"><b class="num">'+hh(done)+'</b><span>Done</span></div>'+
+    '<div class="stat"><b class="num">'+inT+'<small style="font-size:14px;font-weight:600;color:var(--ink-2)"> / '+days+'</small></b><span>Days in '+S.min+'–'+S.max+'h target</span></div>'+
+    '<div class="split"><div class="splitbar" role="img" aria-label="Subject split">'+splitBar+'</div><div class="legend">'+(plan?legend:'<span>Nothing planned this '+per+' yet. Pick a day and use a template to start.</span>')+'</div></div>'+
+    '</div>';
+  if(tgt&&ui.view==='week')el.querySelector('.stat span').insertAdjacentHTML('afterend','<span>Target '+(S.min*7)+'–'+(S.max*7)+'h</span>');
+}
+
+function monthHTML(){
+  var x=parse(ui.sel),Y=x.getFullYear(),M=x.getMonth(),first=iso(new Date(Y,M,1)),dim=new Date(Y,M+1,0).getDate();
+  var start=addDays(first,-dow(first)),rows=Math.ceil((dow(first)+dim)/7),S=state.settings,out='';
+  for(var i=0;i<rows*7;i++){
+    var d=addDays(start,i),st=dayStats(d),dd=parse(d),isOut=dd.getMonth()!==M;
+    out+='<button class="cell'+(isOut?' out':'')+(d===TODAY?' today':'')+(d===ui.sel?' sel':'')+'" data-act="pick" data-date="'+d+'" data-drop="'+d+'" aria-label="'+longDate(d)+(st.study?', '+hh(st.study)+' planned':'')+'">'+
+      '<span class="ct"><span class="dn num">'+dd.getDate()+'</span><span class="hrs num '+hrsClass(st.study)+'">'+(st.study?hh(st.study):'')+'</span></span>'+
+      bubbles(st.study,st.done,'')+
+      testPill(d)+'<span class="cf"><span class="cnt num">'+(st.n?st.nd+'/'+st.n+' done':'')+'</span><span class="hrs hm num '+hrsClass(st.study)+'">'+(st.study?hh(st.study):'')+'</span>'+(d===S.exam?'<em class="tag">JEE Main</em>':'')+'</span></button>';
+  }
+  return '<div class="mh">'+DAYS.map(function(n){return '<span>'+n+'</span>'}).join('')+'</div><div class="mg">'+out+'</div>';
+}
+function cardHTML(t,cls){
+  return '<div class="blk '+cls+' k-'+t.kind+(t.done?' done':'')+'" data-drag="'+t.id+'" draggable="true">'+
+    '<span class="chip">'+(t.kind==='R'?'R':t.kind)+'</span>'+
+    '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+(t.date?range(t.start,t.start+t.dur)+' · ':'')+dur(t.dur)+' · '+esc(t.type)+resNote(t)+'</small></button>'+
+    chkHTML(t)+'</div>';
+}
+var CHECK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+function chkHTML(t){return '<button class="chk'+(t.done?' on':'')+'" data-act="toggle" data-id="'+t.id+'" aria-pressed="'+t.done+'" aria-label="Mark “'+esc(t.title)+'” done">'+CHECK+'</button>'}
+function weekHTML(){
+  var a=startOfWeek(ui.sel),out='';
+  for(var i=0;i<7;i++){
+    var d=addDays(a,i),st=dayStats(d),list=onDay(d);
+    out+='<div class="wc'+(d===ui.sel?' sel':'')+(d===TODAY?' today':'')+'" data-drop="'+d+'">'+
+      '<button class="wh" data-act="pick" data-date="'+d+'"><span class="row1"><b class="num">'+DAYS[i]+' '+parse(d).getDate()+'</b><span class="hrs num '+hrsClass(st.study)+'">'+(st.study?hh(st.study):'')+'</span></span>'+bubbles(st.study,st.done,'')+'</button>'+
+      '<div class="wl">'+list.map(function(t){return cardHTML(t,'wcard')}).join('')+
+      '<button class="wadd" data-act="add" data-date="'+d+'">+ Add</button></div></div>';
+  }
+  return '<div class="wk"><div class="wg">'+out+'</div></div>';
+}
+function layoutCols(list){
+  var res={},cluster=[],cEnd=0;
+  function flushC(){
+    if(!cluster.length)return;
+    var cols=[];
+    cluster.forEach(function(t){
+      var c=cols.findIndex(function(e){return e<=t.start});
+      if(c<0){c=cols.length;cols.push(0)}
+      cols[c]=t.start+t.dur;res[t.id]={col:c};
+    });
+    cluster.forEach(function(t){res[t.id].n=cols.length});
+    cluster=[];
+  }
+  list.forEach(function(t){
+    if(cluster.length&&t.start>=cEnd){flushC();cEnd=0}
+    cluster.push(t);cEnd=Math.max(cEnd,t.start+t.dur);
+  });
+  flushC();
+  return res;
+}
+function dayHTML(){
+  var list=onDay(ui.sel),L=layoutCols(list),h='<div class="tlw" id="tlw"><div class="tli" style="height:'+((T1-T0)/60*HP)+'px">';
+  for(var m=T0;m<=T1;m+=60)h+='<div class="hl" style="top:'+((m-T0)/60*HP)+'px"><span>'+hourLabel(m)+'</span></div>';
+  h+='<div class="tbs" id="tbs" data-drop="'+ui.sel+'" data-tl="1">';
+  list.forEach(function(t){
+    var top=Math.max(0,(t.start-T0)/60*HP),ht=Math.max(12,t.dur/60*HP-2),l=L[t.id]||{col:0,n:1};
+    var size=t.dur<=20?' xs':t.dur<45?' sm':'';
+    h+='<div class="blk tb k-'+t.kind+(t.done?' done':'')+size+'" data-id="'+t.id+'" style="top:'+top+'px;height:'+ht+'px;left:calc('+(l.col/l.n*100)+'% + 2px);width:calc('+(100/l.n)+'% - 4px)">'+
+      '<span class="grip" data-grip="1" aria-hidden="true"></span><span class="chip">'+t.kind+'</span>'+
+      '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+range(t.start,t.start+t.dur)+' · '+dur(t.dur)+' · '+esc(t.type)+resNote(t)+'</small></button>'+
+      chkHTML(t)+'<span class="rs" data-resize="1" aria-hidden="true"></span></div>';
+  });
+  if(ui.sel===TODAY){var n=new Date(),nm=n.getHours()*60+n.getMinutes();if(nm>=T0&&nm<=T1)h+='<div class="now" style="top:'+((nm-T0)/60*HP)+'px"></div>'}
+  if(!list.length)h+='<div class="tl-empty"><b>Nothing planned for this day.</b><br>Click any empty slot to add a task at that time, or start from a template in the panel.</div>';
+  return h+'</div></div></div>';
+}
+function renderCal(){
+  var el=$('#cal'),prev=$('#tlw')?$('#tlw').scrollTop:null;
+  el.className='cal'+(ui.view==='tests'?' plain':'');
+  el.innerHTML=ui.view==='month'?monthHTML():ui.view==='week'?weekHTML():ui.view==='day'?dayHTML():renderTestsView();
+  if(ui.view==='tests'){ui.tlKey=null;drawCharts();return}
+  if(ui.view==='day'){
+    var w=$('#tlw');
+    if(w){
+      if(ui.tlKey!==ui.sel||prev==null){var f=onDay(ui.sel)[0],tg=f?Math.max(T0,f.start-30):420;w.scrollTop=(tg-T0)/60*HP;ui.tlKey=ui.sel}
+      else w.scrollTop=prev;
+    }
+  }else ui.tlKey=null;
+}
+
+function renderPanel(){
+  var d=ui.sel,st=dayStats(d),S=state.settings,list=onDay(d),bk=bank(),stat=loadStatus(st.study),toExam=dayDiff(d,S.exam);
+  var sleep=S.sleep*60,free=1440-st.study-st.rest-sleep;
+  var pills=(d===TODAY?'<span class="pill">Today</span>':'')+(toExam>0?'<span class="pill">'+toExam+' day'+(toExam>1?'s':'')+' to exam</span>':toExam===0?'<span class="pill ok">JEE Main</span>':'');
+  var seg=['P','C','M','T'].map(function(k){return st.sub[k]?'<i class="k-'+k+'" style="width:'+(st.sub[k]/1440*100)+'%" title="'+SUBS[k]+' '+hh(st.sub[k])+'"></i>':''}).join('');
+  var h='<div class="ps"><div class="ph"><div><h3>'+shortDate(d)+'</h3><div class="pills">'+pills+'</div></div>'+
+    (ui.view!=='day'?'<button class="link" data-act="view" data-v="day">Open timeline</button>':'')+'</div>'+
+    '<div class="gauge" style="margin-top:14px">'+bubbles(st.study,st.done,'',true)+'</div>'+
+    '<div class="gl"><span class="num"><b>'+hh(st.study)+'</b> planned · <b>'+hh(st.done)+'</b> done</span><span class="pill '+stat.cls+'">'+stat.text+'</span></div></div>';
+  h+='<div class="ps"><h4>24-hour budget</h4><div class="bud" role="img" aria-label="Study, meals and breaks, and sleep as a share of 24 hours">'+seg+
+    (st.rest?'<i class="rest" style="width:'+(st.rest/1440*100)+'%"></i>':'')+'<i class="sleep" style="width:'+(sleep/1440*100)+'%"></i></div>'+
+    '<div class="budl num"><span>Study <b>'+hh(st.study)+'</b></span><span>Meals + breaks <b>'+hh(st.rest)+'</b></span><span>Sleep <b>'+hh(sleep)+'</b></span>'+
+    '<span class="'+(free<0?'over':'')+'">'+(free<0?'Over by <b>'+hh(-free)+'</b>: something has to give':'Spare <b>'+hh(free)+'</b>')+'</span></div></div>';
+  /* actions */
+  var menuHTML='';
+  if(ui.confirm&&ui.confirm.type==='tpl'){
+    menuHTML='<div class="menu"><p>This replaces the '+list.length+' task'+(list.length>1?'s':'')+' on '+shortDate(d)+' with the '+TEMPLATES[ui.confirm.key].name.toLowerCase()+'.</p><div class="acts"><button class="btn sm pri" data-act="tpl-yes">Replace day</button><button class="btn sm" data-act="menu-close">Cancel</button></div></div>';
+  }else if(ui.confirm&&ui.confirm.type==='clear'){
+    menuHTML='<div class="menu"><p>Remove all '+list.length+' task'+(list.length>1?'s':'')+' from '+shortDate(d)+'?</p><div class="acts"><button class="btn sm danger" data-act="clear-yes">Clear day</button><button class="btn sm" data-act="menu-close">Cancel</button></div></div>';
+  }else if(ui.menu==='tpl'){
+    menuHTML='<div class="menu"><p>Fill this day with a ready schedule. You can edit every block afterwards.</p><div class="acts">'+Object.keys(TEMPLATES).map(function(k){return '<button class="btn sm" data-act="tpl" data-key="'+k+'">'+TEMPLATES[k].name+' · '+hh(tplStudy(k))+'</button>'}).join('')+'</div></div>';
+  }else if(ui.menu==='copy'){
+    menuHTML='<div class="menu"><p>Copy this day’s schedule. Days that already have tasks are skipped.</p><div class="acts"><button class="btn sm" data-act="copy" data-mode="next">Next day</button><button class="btn sm" data-act="copy" data-mode="week">Rest of this week</button><button class="btn sm" data-act="copy" data-mode="7">Next 7 days</button></div></div>';
+  }
+  h+='<div class="ps"><div class="acts"><button class="btn sm pri" data-act="add" data-date="'+d+'">+ Add task</button>'+
+    '<button class="btn sm" data-act="add-test" data-date="'+d+'">+ Test</button>'+
+    '<button class="btn sm" data-act="menu" data-m="tpl" aria-expanded="'+(ui.menu==='tpl')+'">Template</button>'+
+    '<button class="btn sm" data-act="menu" data-m="copy" aria-expanded="'+(ui.menu==='copy')+'">Copy day</button>'+
+    (list.length?'<button class="btn sm danger" data-act="clear">Clear day</button>':'')+'</div>'+menuHTML+'</div>';
+  /* tasks */
+  if(ui.view!=='day'){
+    h+='<div class="ps"><h4>Tasks on this day · '+list.length+'</h4>'+(list.length?'<ul class="lst">'+list.map(function(t){return '<li>'+cardHTML(t,'row')+'</li>'}).join('')+'</ul>':'<p class="empty">Nothing planned yet. Add a task, assign one from the bank below, or start from a template.</p>')+'</div>';
+  }else{
+    h+='<div class="ps"><p class="hint" style="margin:0">Click an empty slot to add a task at that time. Drag a block to move it, drag its bottom edge to resize, and tick the circle when it is done.</p></div>';
+  }
+  /* bank */
+  h+='<div class="ps"><h4>Task bank · '+bk.length+'</h4>'+(bk.length?'<ul class="lst">'+bk.map(function(t){
+    return '<li><div class="blk row k-'+t.kind+'" data-drag="'+t.id+'" draggable="true"><span class="chip">'+t.kind+'</span><button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+dur(t.dur)+' · '+esc(t.type)+'</small></button><button class="btn sm" data-act="assign" data-id="'+t.id+'" aria-label="Assign to '+shortDate(d)+'">Add to '+DAYS[dow(d)]+' '+parse(d).getDate()+'</button></div></li>';
+  }).join('')+'</ul>':'<p class="empty">Keep tasks here until you know which day they belong to, then drag them onto a day or use the button.</p>')+
+  '<div class="acts" style="margin-top:10px"><button class="btn sm" data-act="add-bank">+ Add to bank</button></div></div>';
+  $('#panel').innerHTML=h;
+}
+function render(){
+  var tv=ui.view==='tests';
+  renderTop();renderBanner();renderControls();
+  $('#panel').hidden=tv;$('.layout').classList.toggle('nopanel',tv);
+  renderSummary();renderCal();
+  if(!tv)renderPanel();
+}
+
+/* ---------- toast ---------- */
+var toastT=0;
+function toast(msg,undo){
+  ui.undo=undo||null;
+  $('#toast').innerHTML='<div class="toast"><span>'+esc(msg)+'</span>'+(undo?'<button data-act="undo">Undo</button>':'')+'</div>';
+  clearTimeout(toastT);toastT=setTimeout(function(){$('#toast').innerHTML='';ui.undo=null},6500);
+}
+
+/* ---------- overlays ---------- */
+var lastFocus=null;
+function openOv(html,focusSel){
+  lastFocus=document.activeElement;
+  $('#ov').innerHTML='<div class="scrim" data-act="close-ov"></div>'+html;
+  var f=focusSel&&$(focusSel);if(f)f.focus();
+}
+function closeOv(){
+  $('#ov').innerHTML='';ui.overlay=null;
+  if(lastFocus&&document.contains(lastFocus)&&lastFocus.focus)lastFocus.focus();
+}
+function typeOptions(kind,sel){return TYPES[kind].map(function(t){return '<option'+(t===sel?' selected':'')+'>'+t+'</option>'}).join('')}
+function openTaskForm(o){
+  o=o||{};
+  var t=o.id?get(o.id):null;
+  var v=t?Object.assign({},t):{title:'',kind:o.kind||'P',type:'',date:o.bank?'':(o.date||ui.sel),start:o.start!=null?o.start:null,dur:60};
+  if(!t&&v.date&&v.start==null)v.start=findSlot(v.date,v.dur);
+  ui.overlay={kind:'task',id:t?t.id:null};
+  var isBank=!v.date,st=v.start!=null?pad(Math.floor(v.start/60))+':'+pad(v.start%60):'';
+  var kinds=['P','C','M','T','R'].map(function(k){return '<label class="kopt k-'+k+'"><input type="radio" name="kind" value="'+k+'"'+(v.kind===k?' checked':'')+'><span class="kb"><span class="chip">'+k+'</span>'+SUBS[k]+'</span></label>'}).join('');
+  openOv('<form class="sheet" id="tf" role="dialog" aria-modal="true" aria-labelledby="tfh" autocomplete="off">'+
+    '<h3 id="tfh">'+(t?'Edit task':'New task')+'</h3>'+
+    '<label class="f">Task<input id="tf-title" name="title" maxlength="80" placeholder="e.g. Rotational motion: 30 PYQs" value="'+esc(v.title)+'"></label>'+
+    '<fieldset class="kinds"><legend>Subject</legend>'+kinds+'</fieldset>'+
+    '<label class="f">Type<select name="type" id="tf-type">'+typeOptions(v.kind,v.type)+'</select></label>'+
+    '<label class="cb"><input type="checkbox" name="bank" id="tf-bank"'+(isBank?' checked':'')+'>Keep in the task bank (no day yet)</label>'+
+    '<div class="grid3"><label class="f">Day<input type="date" name="date" id="tf-date" value="'+(v.date||ui.sel)+'"'+(isBank?' disabled':'')+'></label>'+
+    '<label class="f">Start<input type="time" name="start" id="tf-start" step="900" value="'+st+'"'+(isBank?' disabled':'')+'></label>'+
+    '<label class="f">Minutes<input type="number" name="dur" id="tf-dur" min="15" max="480" step="15" value="'+v.dur+'"></label></div>'+
+    '<div class="quick">'+[30,60,90,120,150,180].map(function(m){return '<button type="button" class="btn sm" data-act="qdur" data-m="'+m+'">'+dur(m)+'</button>'}).join('')+'</div>'+
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
+    t?null:'#tf-title');
+}
+function saveTask(form){
+  var fd=new FormData(form),id=ui.overlay&&ui.overlay.id;
+  var kind=fd.get('kind')||'P',type=fd.get('type')||TYPES[kind][0];
+  var title=String(fd.get('title')||'').trim()||(SUBS[kind]+' '+type);
+  var bankOnly=fd.get('bank')==='on',date=bankOnly?'':String(fd.get('date')||'');
+  var d=clamp(Math.round((+fd.get('dur')||60)/15)*15,15,480),start=null;
+  if(date){
+    var tv=String(fd.get('start')||'');
+    if(tv){var p=tv.split(':').map(Number);start=clamp(p[0]*60+p[1],T0,T1-15)}else start=findSlot(date,d,360,id);
+    if(start+d>T1)d=T1-start;
+  }
+  if(date)ui.sel=date;
+  closeOv();
+  mutate(function(){
+    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false})}
+    else state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:start,dur:d,done:false,sample:false});
+  },id?'Task updated':'Task added'+(date?' to '+shortDate(date):' to the bank'));
+}
+function openSettings(){
+  var S=state.settings;ui.overlay={kind:'settings'};
+  openOv('<form class="sheet" id="sf" role="dialog" aria-modal="true" aria-labelledby="sfh">'+
+    '<h3 id="sfh">Exam date and targets</h3>'+
+    '<label class="f">JEE Main date<input type="date" name="exam" id="sf-exam" required value="'+S.exam+'"><small>NTA lists Session 1 as 22–30 January 2027 and calls the dates tentative. Change this if they move.</small></label>'+
+    '<div class="grid2"><label class="f">Daily study, low (hours)<input type="number" name="min" min="1" max="14" step="0.5" value="'+S.min+'"></label><label class="f">Daily study, high (hours)<input type="number" name="max" min="1" max="16" step="0.5" value="'+S.max+'"></label></div>'+
+    '<label class="f">Sleep per night (hours)<input type="number" name="sleep" min="3" max="10" step="0.5" value="'+S.sleep+'"><small>Used in the 24-hour budget so a 14-hour plan shows whether it still fits.</small></label>'+
+    syncBlock()+'<div class="actions"><button type="button" class="btn danger" data-act="reset-arm">Erase all data</button><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save</button></div></form>','#sf-exam');
+}
+function saveSettings(form){
+  var fd=new FormData(form),mn=clamp(+fd.get('min')||12,1,14),mx=clamp(+fd.get('max')||14,1,16);
+  if(mx<mn)mx=mn;
+  state.settings={exam:String(fd.get('exam')||DEFAULTS.exam),min:mn,max:mx,sleep:clamp(+fd.get('sleep')||6.5,3,10)};
+  persist();closeOv();render();
+}
+
+/* ---------- samples ---------- */
+function seedSamples(){
+  var out=[];
+  function mk(d,i,done){return {id:uid(),title:i[4],kind:i[2],type:i[3],date:d,start:i[0],dur:i[1],done:done,sample:true,test:i[5]?cloneTest(i[5]):null}}
+  function day(d,key,upTo,items){(items||TEMPLATES[key].items).forEach(function(i){out.push(mk(d,i,i[0]+i[1]<=upTo))})}
+  day(addDays(TODAY,-2),'mock',1440);
+  out.forEach(function(t){if(t.test&&t.date===addDays(TODAY,-2))t.test.res={tot:212,P:70,C:77,M:65,rank:205,of:1200}});
+  day(addDays(TODAY,-1),'balanced',1440);
+  day(TODAY,'balanced',780);
+  day(addDays(TODAY,1),'mock',0);
+  day(addDays(TODAY,2),'balanced',0,TEMPLATES.balanced.items.slice(0,8));
+  var heavy=addDays(TODAY,3);
+  day(heavy,'balanced',0);
+  out.push(mk(heavy,[300,60,'P','Doubts','Physics: doubt clearing'],false));
+  out.push(mk(heavy,[1380,45,'M','Revision','Quick formula revision'],false));
+  [['P','PYQ','Rotational motion: 30 PYQs',120],['C','Notes','GOC + reaction mechanisms notes',90],['M','DPP','Definite integrals: DPP 12',120],['C','Revision','Electrochemistry formula sheet',60]].forEach(function(b){
+    out.push({id:uid(),title:b[2],kind:b[0],type:b[1],date:'',start:null,dur:b[3],done:false,sample:true,test:null});
+  });
+  return out.concat(sampleTests());
+}
+
+/* ---------- tests: model helpers ---------- */
+var TEST_KINDS={
+  full:{label:'Full test',short:'Full test',dur:180,max:300,start:540,subs:'PCM'},
+  part:{label:'Part test',short:'Part test',dur:120,max:200,start:960,subs:'PCM'},
+  chapter:{label:'Chapter test',short:'Chapter',dur:60,max:100,start:960,subs:'PCM'}
+};
+var SERIES={tot:{label:'Total',cls:'s-tot'},P:{label:'Physics',cls:'s-P'},C:{label:'Chemistry',cls:'s-C'},M:{label:'Maths',cls:'s-M'}};
+var cloneTest=function(x){return {k:x.k,max:x.max,subs:x.subs,syl:x.syl||'',res:null}};
+var isTest=function(t){return !!t.test};
+var allTests=function(){return state.tasks.filter(isTest)};
+var byWhen=function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.start-b.start};
+var mean=function(a){return a.reduce(function(x,y){return x+y},0)/a.length};
+var pc=function(v){return (Math.round(v*10)/10)+'%'};
+var dmon=function(d){var x=parse(d);return x.getDate()+' '+MON[x.getMonth()]};
+function pctOf(t){var r=t.test&&t.test.res;return r&&t.test.max?r.tot/t.test.max*100:null}
+function subMax(t){return t.test.max/Math.max(1,t.test.subs.length)}
+function subVal(t,k){
+  var r=t.test.res;if(!r||t.test.subs.indexOf(k)<0)return null;
+  if(t.test.subs.length===1)return r.tot;
+  return typeof r[k]==='number'?r[k]:null;
+}
+function subPct(t,k){var v=subVal(t,k);return v==null?null:v/subMax(t)*100}
+function pctile(t){
+  var r=t.test.res;if(!r)return null;
+  if(typeof r.pct==='number')return r.pct;
+  if(r.rank&&r.of&&r.rank<=r.of)return (r.of-r.rank+1)/r.of*100;
+  return null;
+}
+function testPill(d){
+  var ts=onDay(d).filter(isTest);
+  if(!ts.length)return '';
+  ts.sort(byWhen);
+  var shown=ts.slice(0,2).map(function(t){return '<span class="tpill" title="'+esc(t.title)+'">'+esc(t.title)+'</span>'}).join('');
+  return '<span class="tps">'+shown+(ts.length>2?'<span class="tpill">+'+(ts.length-2)+' more</span>':'')+'</span>';
+}
+function resNote(t){var p=pctOf(t);return p==null?'':' · '+pc(p)}
+
+/* ---------- tests view ---------- */
+function resultsInScope(all){
+  var min=ui.tf.range?addDays(TODAY,-ui.tf.range):'';
+  return allTests().filter(function(t){return t.test.res&&(all||t.test.subs!=='O')&&(ui.tf.kind==='all'||t.test.k===ui.tf.kind)&&t.date>=min}).sort(byWhen);
+}
+function testsStats(res){
+  var pcts=res.map(pctOf),o={n:res.length,avg:null,last:null,delta:null,weak:null};
+  if(pcts.length){
+    o.avg=mean(pcts);o.last=pcts[pcts.length-1];
+    var prev=pcts.slice(Math.max(0,pcts.length-4),pcts.length-1);
+    if(prev.length)o.delta=o.last-mean(prev);
+  }
+  var subs=[];
+  ['P','C','M'].forEach(function(k){
+    var a=res.map(function(t){return subPct(t,k)}).filter(function(v){return v!=null});
+    if(a.length)subs.push({k:k,avg:mean(a)});
+  });
+  if(subs.length>=2)o.weak=subs.reduce(function(a,b){return b.avg<a.avg?b:a});
+  return o;
+}
+function renderTestsView(){
+  var all=allTests();
+  if(!all.length){
+    return '<section class="card"><h3>No tests yet</h3><p class="empty" style="margin:8px 0 14px">Add chapter tests and full tests one by one, or import a whole schedule at once. After each test, record the marks and rank here to see your trend.</p>'+
+      '<div class="acts"><button class="btn pri" data-act="import">Import schedule</button><button class="btn" data-act="add-test">+ Add test</button><button class="btn" data-act="sample-tests">Try with sample tests</button></div></section>';
+  }
+  var res=resultsInScope(),st=testsStats(res);
+  var kinds=[['all','All'],['full','Full'],['part','Part'],['chapter','Chapter']].map(function(k){return '<button data-act="tkind" data-v="'+k[0]+'" aria-pressed="'+(ui.tf.kind===k[0])+'">'+k[1]+'</button>'}).join('');
+  var ranges=[[30,'30 days'],[90,'90 days'],[0,'All time']].map(function(r){return '<button data-act="trange" data-v="'+r[0]+'" aria-pressed="'+(ui.tf.range===r[0])+'">'+r[1]+'</button>'}).join('');
+  var next=all.filter(function(t){return !t.test.res&&t.date>=TODAY&&(ui.tf.kind==='all'||t.test.k===ui.tf.kind)}).sort(byWhen)[0];
+  var nd=next?dayDiff(TODAY,next.date):0;
+  var stats='<div class="sum">'+
+    '<div class="stat"><b>'+(next?(nd===0?'Today':nd===1?'Tomorrow':'In '+nd+' days'):'None')+'</b><span>'+(next?esc(next.title)+' · '+shortDate(next.date):'No upcoming tests')+'</span></div>'+
+    '<div class="stat"><b class="num">'+(st.avg==null?'—':pc(st.avg))+'</b><span>Average over '+st.n+' test'+(st.n===1?'':'s')+'</span></div>'+
+    '<div class="stat"><b class="num">'+(st.last==null?'—':pc(st.last))+'</b><span>'+(st.delta==null?'Latest test':'<span class="'+(st.delta>=0?'up':'dn2')+'">'+(st.delta>=0?'▲ ':'▼ ')+pc(Math.abs(st.delta))+'</span> vs the 3 before')+'</span></div>'+
+    '<div class="stat"><b>'+(st.weak?SUBS[st.weak.k]:'—')+'</b><span>'+(st.weak?'Weakest subject, average '+pc(st.weak.avg):'Needs marks for 2+ subjects')+'</span></div></div>';
+  var filters='<div class="ctl2"><div class="seg" role="group" aria-label="Test type">'+kinds+'</div><div class="seg" role="group" aria-label="Date range">'+ranges+'</div></div>';
+  var legend=['tot','P','C','M'].map(function(k){return '<button class="lg '+SERIES[k].cls+'" data-act="series" data-k="'+k+'" aria-pressed="'+(!!ui.series[k])+'"><i class="key"></i>'+SERIES[k].label+'</button>'}).join('');
+  var rk=rankMode(res);
+  var chart1='<section class="card"><header><h3>Marks<small>% of maximum marks</small></h3><div class="lgs" role="group" aria-label="Lines shown">'+legend+'</div></header><div class="plot" id="plot1" tabindex="0"></div></section>';
+  var chart2='<section class="card"><header><h3>'+(rk==='pct'?'Percentile':'Rank')+'<small>'+(rk==='pct'?'Higher is better':'Lower is better. Batch sizes differ, so use percentile to compare.')+'</small></h3>'+
+    '<div class="seg" role="group" aria-label="Rank chart measure"><button data-act="rankmode" data-m="pct" aria-pressed="'+(rk==='pct')+'">Percentile</button><button data-act="rankmode" data-m="rank" aria-pressed="'+(rk==='rank')+'">Rank</button></div></header><div class="plot" id="plot2" tabindex="0"></div></section>';
+  return stats+filters+chart1+chart2+testsTable(res);
+}
+function rankMode(res){
+  if(ui.rank!=='auto')return ui.rank;
+  return res.filter(function(t){return pctile(t)!=null}).length>=2?'pct':'rank';
+}
+function testsTable(res){
+  var kindOk=function(t){return ui.tf.kind==='all'||t.test.k===ui.tf.kind};
+  var all=allTests().filter(kindOk);
+  var awaiting=all.filter(function(t){return !t.test.res&&t.date<TODAY}).sort(byWhen);
+  var upcoming=all.filter(function(t){return !t.test.res&&t.date>=TODAY}).sort(byWhen);
+  var done=resultsInScope(true).reverse();
+  function sec(title,n,rows){return n?'<tr class="gh"><td colspan="10">'+title+' · '+n+'</td></tr>'+rows:''}
+  function row(t){
+    var r=t.test.res,dd=dayDiff(TODAY,t.date),p=pctOf(t),pt=r?pctile(t):null;
+    var when=r?'':(dd<0?'<small><span class="pill over">Awaiting result</span></small>':'<small>'+(dd===0?'Today':'In '+dd+' day'+(dd>1?'s':''))+'</small>');
+    var sc=function(k,l){if(t.test.subs.indexOf(k)<0)return '<td class="n mut e">–</td>';var v=subVal(t,k);return '<td class="n'+(v==null?' e':'')+'" data-l="'+l+'">'+(v==null?'<span class="mut">—</span>':v)+'</td>'};
+    return '<tr><td class="dt num">'+dmon(t.date)+when+'</td>'+
+      '<td class="nm"><b>'+esc(t.title)+'</b><small>'+TEST_KINDS[t.test.k].label+' · '+clock(t.start)+' · '+dur(t.dur)+(t.test.syl?' · '+esc(t.test.syl):'')+'</small></td>'+
+      '<td class="n" data-l="Marks">'+(r?r.tot+'<span class="mut"> / '+t.test.max+'</span>':'<span class="mut">/ '+t.test.max+'</span>')+'</td>'+
+      '<td class="n'+(p==null?' e':'')+'" data-l="Score">'+(p==null?'<span class="mut">—</span>':pc(p))+'</td>'+sc('P','Phy')+sc('C','Chem')+sc('M','Maths')+
+      '<td class="n'+(r&&r.rank?'':' e')+'" data-l="Rank">'+(r&&r.rank?r.rank+(r.of?'<span class="mut"> / '+r.of+'</span>':''):'<span class="mut">—</span>')+'</td>'+
+      '<td class="n'+(pt==null?' e':'')+'" data-l="%ile">'+(pt==null?'<span class="mut">—</span>':pt.toFixed(1))+'</td>'+
+      '<td class="act"><button class="btn sm'+(!r&&dd<=0?' pri':'')+'" data-act="open-result" data-id="'+t.id+'">'+(r?'Edit result':'Add result')+'</button> <button class="btn sm" data-act="edit" data-id="'+t.id+'">Edit test</button></td></tr>';
+  }
+  var body=sec('Awaiting result',awaiting.length,awaiting.map(row).join(''))+sec('Upcoming',upcoming.length,upcoming.map(row).join(''))+sec('Results',done.length,done.map(row).join(''));
+  if(!body)body='<tr><td colspan="10" class="mut" style="padding:16px 10px">No tests match these filters.</td></tr>';
+  return '<section class="card"><header><h3>All tests<small>Every value in the charts is listed here</small></h3><div class="acts"><button class="btn sm" data-act="import">Import schedule</button><button class="btn sm pri" data-act="add-test">+ Add test</button></div></header>'+
+    '<div class="tw"><table class="tt"><thead><tr><th>Date</th><th>Test</th><th class="n">Marks</th><th class="n">%</th><th class="n">Phy</th><th class="n">Chem</th><th class="n">Maths</th><th class="n">Rank / of</th><th class="n">%ile</th><th></th></tr></thead><tbody>'+body+'</tbody></table></div></section>';
+}
+
+/* chart data */
+function scoreCfg(res){
+  var keys=['tot','P','C','M'].filter(function(k){return ui.series[k]});
+  var pts=res.map(function(t){
+    var v={tot:pctOf(t),P:subPct(t,'P'),C:subPct(t,'C'),M:subPct(t,'M')},rows=[];
+    keys.forEach(function(k){if(v[k]!=null)rows.push({cls:SERIES[k].cls,label:SERIES[k].label,text:pc(v[k])+(k==='tot'?'  ('+t.test.res.tot+'/'+t.test.max+')':'')})});
+    return {date:t.date,name:t.title,sub:TEST_KINDS[t.test.k].label+' · '+dmon(t.date),v:v,rows:rows};
+  });
+  var vals=[];
+  pts.forEach(function(p){keys.forEach(function(k){if(p.v[k]!=null)vals.push(p.v[k])})});
+  var ymin=Math.min(60,Math.floor(((vals.length?Math.min.apply(null,vals):0)-5)/20)*20),ticks=[];
+  for(var t=ymin;t<=100;t+=20)ticks.push(t);
+  var first=vals.length?pts[0].v.tot:null,last=pts.length?pts[pts.length-1].v.tot:null;
+  return {pts:pts,series:keys.map(function(k){return {key:k,cls:SERIES[k].cls}}),y:{min:ymin,max:100,ticks:ticks,fmt:function(v){return v+'%'},lab:pc},
+    label:'Marks as a percentage of the maximum across '+pts.length+' tests'+(first!=null&&last!=null?', from '+pc(first)+' to '+pc(last):'')+'. Full values are in the table below.',
+    empty:'No results in this selection. Add a result from the table below and the trend will appear here.'};
+}
+function niceStep(x){var p=Math.pow(10,Math.floor(Math.log(x)/Math.LN10)),f=x/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p}
+function rankCfg(res,mode){
+  var pts,y;
+  if(mode==='pct'){
+    var rs=res.filter(function(t){return pctile(t)!=null});
+    pts=rs.map(function(t){var r=t.test.res,p=pctile(t);
+      return {date:t.date,name:t.title,sub:TEST_KINDS[t.test.k].label+' · '+dmon(t.date),v:{m:p},rows:[{cls:'s-tot',label:'Percentile',text:p.toFixed(1)}].concat(r.rank?[{label:'Rank',text:r.rank+(r.of?' of '+r.of:'')}]:[])}});
+    var mn=pts.length?Math.min.apply(null,pts.map(function(p){return p.v.m})):0,lo=Math.max(0,Math.floor((mn-5)/10)*10),tk=[],stp=(100-lo)>40?20:10;
+    for(var t=lo;t<=100;t+=stp)tk.push(t);
+    y={min:lo,max:100,ticks:tk,fmt:function(v){return String(v)},lab:function(v){return v.toFixed(1)}};
+  }else{
+    var rr=res.filter(function(t){return t.test.res.rank});
+    pts=rr.map(function(t){var r=t.test.res,p=pctile(t);
+      return {date:t.date,name:t.title,sub:TEST_KINDS[t.test.k].label+' · '+dmon(t.date),v:{m:r.rank},rows:[{cls:'s-tot',label:'Rank',text:r.rank+(r.of?' of '+r.of:'')}].concat(p!=null?[{label:'Percentile',text:p.toFixed(1)}]:[])}});
+    var mx=pts.length?Math.max.apply(null,pts.map(function(p){return p.v.m})):10,stp2=niceStep(Math.max(1,(mx-1))/4),top=Math.max(stp2,Math.ceil(mx/stp2)*stp2),tk2=[1];
+    for(var q=stp2;q<=top;q+=stp2)if(q>1+stp2*0.5)tk2.push(q);
+    y={min:1,max:Math.max(top,2),ticks:tk2,fmt:function(v){return String(v)},invert:true,lab:function(v){return String(v)}};
+  }
+  return {pts:pts,series:[{key:'m',cls:'s-tot'}],y:y,
+    label:(mode==='pct'?'Percentile':'Rank')+' across '+pts.length+' tests. Full values are in the table below.',
+    empty:'No '+(mode==='pct'?'percentile':'rank')+' data yet. Enter the rank'+(mode==='pct'?' and the number of students':'')+' when you record a result.'};
+}
+function drawCharts(){
+  var res=resultsInScope(),h1=$('#plot1'),h2=$('#plot2');
+  if(h1)drawChart(h1,scoreCfg(res));
+  if(h2)drawChart(h2,rankCfg(res,rankMode(res)));
+}
+function drawChart(host,cfg){
+  host.textContent='';
+  var pts=cfg.pts,n=pts.length;
+  if(!n){
+    var e=document.createElement('div');e.className='plot-empty';e.textContent=cfg.empty;
+    host.appendChild(e);host.style.height='auto';host.removeAttribute('tabindex');return;
+  }
+  host.style.height='250px';host.setAttribute('tabindex','0');
+  var W=Math.max(280,host.clientWidth),H=250,m={l:44,r:56,t:14,b:30},pw=W-m.l-m.r,ph=H-m.t-m.b,pad=8,NS='http://www.w3.org/2000/svg',y=cfg.y;
+  function el(name,attrs,parent){var x=document.createElementNS(NS,name);for(var k in attrs)x.setAttribute(k,attrs[k]);if(parent)parent.appendChild(x);return x}
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,width:W,height:H,role:'img','aria-label':cfg.label},host);
+  var xAt=function(i){return n===1?m.l+pw/2:m.l+pad+(pw-2*pad)*i/(n-1)};
+  var yAt=function(v){var f=(v-y.min)/(y.max-y.min);return m.t+(y.invert?f:1-f)*ph};
+  y.ticks.forEach(function(tk){
+    var yy=yAt(tk);
+    el('line',{'class':'gl',x1:m.l,x2:W-m.r,y1:yy,y2:yy},svg);
+    el('text',{'class':'ax',x:m.l-8,y:yy+4,'text-anchor':'end'},svg).textContent=y.fmt(tk);
+  });
+  var stepPx=n>1?(pw-2*pad)/(n-1):pw,every=Math.max(1,Math.ceil(58/stepPx));
+  pts.forEach(function(p,i){if(i%every)return;el('text',{'class':'ax',x:xAt(i),y:H-8,'text-anchor':'middle'},svg).textContent=dmon(p.date)});
+  var usedY=[];
+  cfg.series.forEach(function(s){
+    var pairs=[];
+    pts.forEach(function(p,i){var v=p.v[s.key];if(v!=null)pairs.push([xAt(i),yAt(v),v])});
+    if(pairs.length>1)el('path',{'class':'ln '+s.cls,d:pairs.map(function(q,j){return (j?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)}).join(' ')},svg);
+    pairs.forEach(function(q,j){if(n<=20||j===pairs.length-1)el('circle',{'class':'mk '+s.cls,cx:q[0],cy:q[1],r:5},svg)});
+    if(pairs.length){
+      var q=pairs[pairs.length-1],ok=usedY.every(function(u){return Math.abs(u-q[1])>=13});
+      if(ok){usedY.push(q[1]);el('text',{'class':'lbl',x:q[0]+11,y:q[1]+4},svg).textContent=y.lab(q[2])}
+    }
+  });
+  var xh=el('line',{'class':'xh',x1:0,x2:0,y1:m.t,y2:m.t+ph,visibility:'hidden'},svg),hv=el('g',{},svg);
+  var tip=document.createElement('div');tip.className='tip';tip.hidden=true;host.appendChild(tip);
+  var cur=null;
+  function hide(){cur=null;xh.setAttribute('visibility','hidden');hv.textContent='';tip.hidden=true}
+  function show(i){
+    cur=i;var p=pts[i],x=xAt(i);
+    xh.setAttribute('x1',x);xh.setAttribute('x2',x);xh.setAttribute('visibility','visible');
+    hv.textContent='';
+    cfg.series.forEach(function(s){var v=p.v[s.key];if(v!=null)el('circle',{'class':'mk '+s.cls,cx:x,cy:yAt(v),r:6},hv)});
+    tip.textContent='';
+    var h=document.createElement('div');h.className='tip-h';
+    var b=document.createElement('b');b.textContent=p.name;h.appendChild(b);h.appendChild(document.createTextNode(p.sub));tip.appendChild(h);
+    p.rows.forEach(function(r){
+      var row=document.createElement('div');row.className='tip-r '+(r.cls||'');
+      if(r.cls){var k=document.createElement('i');k.className='key';row.appendChild(k)}
+      var l=document.createElement('span');l.className='tl';l.textContent=r.label;
+      var v=document.createElement('b');v.textContent=r.text;
+      row.appendChild(l);row.appendChild(v);tip.appendChild(row);
+    });
+    tip.hidden=false;
+    var tw=tip.offsetWidth,left=x+14;
+    if(left+tw>W-4)left=x-14-tw;
+    tip.style.left=Math.max(4,left)+'px';tip.style.top=(m.t+4)+'px';
+  }
+  function idxAt(e){
+    var r=svg.getBoundingClientRect(),px=(e.clientX-r.left)*(W/(r.width||W));
+    if(n===1)return 0;
+    return clamp(Math.round((px-(m.l+pad))/((pw-2*pad)/(n-1))),0,n-1);
+  }
+  svg.addEventListener('pointermove',function(e){show(idxAt(e))});
+  svg.addEventListener('pointerdown',function(e){show(idxAt(e))});
+  svg.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse')hide()});
+  host.onkeydown=function(e){
+    var d=e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0;
+    if(d){e.preventDefault();show(clamp((cur==null?n-1:cur)+d,0,n-1))}
+    else if(e.key==='Home'){e.preventDefault();show(0)}
+    else if(e.key==='End'){e.preventDefault();show(n-1)}
+    else if(e.key==='Escape')hide();
+  };
+  host.onfocus=function(){if(cur==null)show(n-1)};
+  host.onblur=hide;
+}
+var resizeT=0;
+window.addEventListener('resize',function(){clearTimeout(resizeT);resizeT=setTimeout(function(){if(ui.view==='tests')drawCharts()},150)});
+
+/* ---------- tests: forms ---------- */
+function showErr(form,msg,field){
+  var p=form.querySelector('.err');if(p){p.textContent=msg;p.hidden=false}
+  var f=field&&form.querySelector(field);if(f)f.focus();
+}
+function openTestForm(o){
+  o=o||{};
+  var t=o.id?get(o.id):null,tt=t&&t.test,k=tt?tt.k:'full',D=TEST_KINDS[k];
+  var v=t?{name:t.title,k:k,date:t.date,start:t.start,dur:t.dur,max:tt.max,subs:tt.subs,syl:tt.syl||''}:{name:'',k:'full',date:o.date||ui.sel,start:D.start,dur:D.dur,max:D.max,subs:D.subs,syl:''};
+  ui.overlay={kind:'test',id:t?t.id:null};
+  var kinds=Object.keys(TEST_KINDS).map(function(x){return '<label class="kopt"><input type="radio" name="tk" value="'+x+'"'+(v.k===x?' checked':'')+'><span class="kb">'+TEST_KINDS[x].label+'</span></label>'}).join('');
+  var subs=['P','C','M','O'].map(function(s){return '<label class="kopt k-'+s+'"><input type="checkbox" name="sub" value="'+s+'"'+(v.subs.indexOf(s)>=0?' checked':'')+'><span class="kb"><span class="chip">'+s+'</span>'+SUBS[s]+'</span></label>'}).join('');
+  openOv('<form class="sheet" id="xf" novalidate role="dialog" aria-modal="true" aria-labelledby="xfh" autocomplete="off">'+
+    '<h3 id="xfh">'+(t?'Edit test':'New test')+'</h3>'+
+    '<label class="f">Name<input id="xf-name" name="name" maxlength="80" placeholder="e.g. Full test 5 (JEE Main pattern)" value="'+esc(v.name)+'"></label>'+
+    '<fieldset class="kinds"><legend>Type</legend>'+kinds+'</fieldset>'+
+    '<div class="grid3"><label class="f">Day<input type="date" id="xf-date" name="date" value="'+v.date+'"></label>'+
+    '<label class="f">Start<input type="time" id="xf-start" name="start" step="900" value="'+pad(Math.floor(v.start/60))+':'+pad(v.start%60)+'"></label>'+
+    '<label class="f">Minutes<input type="number" id="xf-dur" name="dur" min="15" max="480" step="15" value="'+v.dur+'"></label></div>'+
+    '<div class="grid2"><label class="f">Maximum marks<input type="number" id="xf-max" name="max" min="1" step="any" value="'+v.max+'"></label>'+
+    '<fieldset class="kinds"><legend>Subjects covered</legend>'+subs+'</fieldset></div>'+
+    '<label class="f">Syllabus or chapters<input id="xf-syl" name="syl" maxlength="200" placeholder="e.g. Rotational motion, Gravitation" value="'+esc(v.syl)+'"></label>'+
+    '<p class="err" hidden></p>'+
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-test">Delete</button><button type="button" class="btn" data-act="open-result" data-id="'+t.id+'">'+(tt.res?'Edit result':'Add result')+'</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save test</button></div></form>',
+    t?null:'#xf-name');
+}
+function saveTest(form){
+  var fd=new FormData(form),id=ui.overlay&&ui.overlay.id,k=String(fd.get('tk')||'full'),D=TEST_KINDS[k];
+  var picked=fd.getAll('sub'),subs=['P','C','M','O'].filter(function(s){return picked.indexOf(s)>=0}).join('');
+  var date=String(fd.get('date')||'');
+  if(!date)return showErr(form,'Pick the day of the test.','#xf-date');
+  if(!subs)return showErr(form,'Pick at least one subject.');
+  var max=+fd.get('max');
+  if(!(max>=1))return showErr(form,'Maximum marks must be at least 1.','#xf-max');
+  var name=String(fd.get('name')||'').trim()||D.label,syl=String(fd.get('syl')||'').trim();
+  var tv=String(fd.get('start')||''),p=tv?tv.split(':').map(Number):[Math.floor(D.start/60),D.start%60];
+  var start=clamp(p[0]*60+p[1],T0,T1-15),d=clamp(Math.round((+fd.get('dur')||D.dur)/15)*15,15,480);
+  if(start+d>T1)d=T1-start;
+  ui.sel=date;closeOv();
+  mutate(function(){
+    var t=id&&get(id);
+    if(t){t.title=name;t.type=D.label;t.date=date;t.start=start;t.dur=d;t.sample=false;t.test.k=k;t.test.max=max;t.test.subs=subs;t.test.syl=syl}
+    else state.tasks.push({id:uid(),title:name,kind:'T',type:D.label,date:date,start:start,dur:d,done:false,sample:false,test:{k:k,max:max,subs:subs,syl:syl,res:null}});
+  },id?'Test updated':'Test added to '+shortDate(date));
+}
+function openResultForm(id){
+  var t=get(id);if(!t||!t.test)return;
+  var tt=t.test,r=tt.res||{},multi=tt.subs.length>1;
+  ui.overlay={kind:'result',id:id};
+  var sm=Math.round(subMax(t)*100)/100;
+  var subF=multi?'<div class="grid3">'+tt.subs.split('').map(function(s){return '<label class="f">'+SUBS[s]+' (max '+sm+')<input type="number" step="any" inputmode="decimal" name="'+s+'" data-sub="1" value="'+(typeof r[s]==='number'?r[s]:'')+'"></label>'}).join('')+'</div>':'';
+  var sum=0,anySub=false;if(multi)tt.subs.split('').forEach(function(s){if(typeof r[s]==='number'){sum+=r[s];anySub=true}});
+  var manual=r.tot!=null&&anySub&&r.tot!==sum?' data-manual="1"':'';
+  openOv('<form class="sheet" id="rf" novalidate role="dialog" aria-modal="true" aria-labelledby="rfh" autocomplete="off">'+
+    '<h3 id="rfh">Result: '+esc(t.title)+'</h3>'+
+    '<p class="empty" style="margin:-6px 0 0">'+TEST_KINDS[tt.k].label+' · '+shortDate(t.date)+' · maximum '+tt.max+' marks</p>'+
+    subF+
+    '<div class="grid3"><label class="f">Total marks<input type="number" step="any" inputmode="decimal" id="rf-tot" name="tot"'+manual+' value="'+(r.tot!=null?r.tot:'')+'"></label>'+
+    '<label class="f">Rank<input type="number" min="1" step="1" inputmode="numeric" id="rf-rank" name="rank" value="'+(r.rank||'')+'"></label>'+
+    '<label class="f">Out of (students)<input type="number" min="1" step="1" inputmode="numeric" id="rf-of" name="of" value="'+(r.of||'')+'"></label></div>'+
+    '<div class="grid2"><label class="f">Percentile (optional)<input type="number" min="0" max="100" step="any" inputmode="decimal" id="rf-pct" name="pct" value="'+(typeof r.pct==='number'?r.pct:'')+'"><small>Left empty, it is worked out from rank and batch size.</small></label>'+
+    '<label class="f">Note<input name="note" maxlength="120" placeholder="e.g. lost marks in electrostatics" value="'+esc(r.note||'')+'"></label></div>'+
+    '<p class="err" hidden></p>'+
+    '<div class="actions">'+(tt.res?'<button type="button" class="btn danger" data-act="del-result">Remove result</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save result</button></div></form>',
+    multi?'[data-sub]':'#rf-tot');
+}
+function saveResult(form){
+  var id=ui.overlay&&ui.overlay.id,t=get(id);if(!t)return closeOv();
+  var tt=t.test,fd=new FormData(form),multi=tt.subs.length>1,res={};
+  var num=function(k){var v=String(fd.get(k)==null?'':fd.get(k)).trim().replace(/,/g,'');if(v==='')return null;var x=+v;return isNaN(x)?NaN:x};
+  var sm=subMax(t),sum=0,any=false,i;
+  if(multi){
+    for(i=0;i<tt.subs.length;i++){
+      var s=tt.subs[i],v=num(s);
+      if(v!=null){
+        if(isNaN(v)||v<-sm||v>sm)return showErr(form,SUBS[s]+' marks must be between '+(-sm)+' and '+sm+'.','[name="'+s+'"]');
+        res[s]=v;sum+=v;any=true;
+      }
+    }
+  }
+  var tot=num('tot');
+  if(tot==null&&any)tot=sum;
+  if(tot==null||isNaN(tot))return showErr(form,'Enter the total marks.','#rf-tot');
+  if(tot<-tt.max||tot>tt.max)return showErr(form,'Total marks must be between '+(-tt.max)+' and '+tt.max+'.','#rf-tot');
+  res.tot=tot;
+  var rank=num('rank'),of=num('of'),pct=num('pct');
+  if(rank!=null){if(isNaN(rank)||rank<1||rank%1)return showErr(form,'Rank must be a whole number, 1 or higher.','#rf-rank');res.rank=rank}
+  if(of!=null){if(isNaN(of)||of<1||of%1)return showErr(form,'Batch size must be a whole number, 1 or higher.','#rf-of');res.of=of}
+  if(res.rank&&res.of&&res.rank>res.of)return showErr(form,'Rank cannot be larger than the number of students.','#rf-rank');
+  if(pct!=null){if(isNaN(pct)||pct<0||pct>100)return showErr(form,'Percentile must be between 0 and 100.','#rf-pct');res.pct=pct}
+  var note=String(fd.get('note')||'').trim();if(note)res.note=note;
+  closeOv();
+  mutate(function(){tt.res=res;t.done=true;t.sample=false},'Result saved: '+pc(res.tot/tt.max*100)+' in “'+t.title+'”');
+}
+
+/* ---------- import schedule (CSV or JSON) ---------- */
+var IMP_EXAMPLE_CSV='date,name,type,start,duration,max,subjects,syllabus\n2026-11-15,Full test 5,full,09:00,180,300,PCM,Full syllabus\n2026-11-18,Chapter test: Electrostatics,chapter,16:00,60,100,P,Electric charges and fields\n2026-11-22,Part test 3,part,16:00,120,200,PC,Units 1-6 (Physics and Chemistry)\n';
+var IMP_EXAMPLE_JSON='{\n  "format": "jee-planner-tests/1",\n  "tests": [\n    {"date":"2026-11-15","name":"Full test 5","type":"full","start":"09:00","duration":180,"max":300,"subjects":"PCM","syllabus":"Full syllabus"},\n    {"date":"2026-11-18","name":"Chapter test: Electrostatics","type":"chapter","start":"16:00","duration":60,"max":100,"subjects":"P","syllabus":"Electric charges and fields"}\n  ]\n}\n';
+var ALIAS={
+  date:['date','day','testdate','dateoftest','examdate','on'],
+  name:['name','test','testname','title','exam','examname'],
+  type:['type','kind','category','testtype'],
+  start:['start','starttime','time','timing','begin'],
+  dur:['duration','dur','minutes','mins','length','durationminutes'],
+  max:['max','maxmarks','marks','totalmarks','fullmarks','maximummarks','maxscore'],
+  subs:['subjects','subject','subs','paper'],
+  syl:['syllabus','chapters','chapter','topics','topic','portion','coverage'],
+  tot:['score','scored','obtained','marksobtained','total','totalscore','yourmarks'],
+  P:['physics','phy','p'],C:['chemistry','chem','c'],M:['maths','math','mathematics','m'],
+  rank:['rank','airrank','batchrank','myrank'],
+  of:['of','outof','students','candidates','totalstudents','batchsize'],
+  pct:['percentile','pct']
+};
+function parseCSV(text){
+  var first=text.split(/\r?\n/,1)[0]||'',best=',',bc=-1;
+  [',','\t',';'].forEach(function(d){var c=first.split(d).length-1;if(c>bc){bc=c;best=d}});
+  var rows=[],row=[],cell='',q=false,i,c;
+  for(i=0;i<text.length;i++){
+    c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++}else q=false}else cell+=c}
+    else if(c==='"')q=true;
+    else if(c===best){row.push(cell);cell=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';rows.push(row);row=[]}
+    else cell+=c;
+  }
+  row.push(cell);rows.push(row);
+  return rows.filter(function(r){return r.some(function(x){return x.trim()!==''})});
+}
+function mkDate(y,m,d){var dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?iso(dt):null}
+function monthIdx(s){var i='janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(s.slice(0,3).toLowerCase());return i<0||i%3?-1:i/3}
+function withYear(mo,d,y){
+  if(y){y=+y;if(y<100)y+=2000;return mkDate(y,mo+1,d)}
+  var Y=parse(TODAY).getFullYear(),c=mkDate(Y,mo+1,d);
+  if(c&&c<addDays(TODAY,-150))c=mkDate(Y+1,mo+1,d);
+  return c;
+}
+function parseDateStr(v){
+  if(v==null)return null;
+  var s=String(v).trim(),m;if(!s)return null;
+  if((m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/)))return mkDate(+m[1],+m[2],+m[3]);
+  if((m=s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){var y=+m[3];if(y<100)y+=2000;return mkDate(y,+m[2],+m[1])}
+  if((m=s.match(/^(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]{3,9})\.?,?(?:[\s-]+(\d{2,4}))?/))){var mo=monthIdx(m[2]);return mo<0?null:withYear(mo,+m[1],m[3])}
+  if((m=s.match(/^([A-Za-z]{3,9})\.?[\s-]+(\d{1,2})(?:st|nd|rd|th)?,?(?:[\s-]+(\d{2,4}))?/))){var mo2=monthIdx(m[1]);return mo2<0?null:withYear(mo2,+m[2],m[3])}
+  if(/^\d{5}$/.test(s)){var dt=new Date(1899,11,30+(+s));return iso(dt)}
+  return null;
+}
+function oneTime(s){
+  var m=String(s).trim().toLowerCase().match(/^(\d{1,2})(?:[:.h](\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?$/);
+  if(!m)return null;
+  var h=+m[1],mm=+(m[2]||0),a=m[3]?m[3][0]:'';
+  if(h>24||mm>59)return null;
+  if(a==='p'&&h<12)h+=12;else if(a==='a'&&h===12)h=0;else if(!a&&h>=1&&h<=6)h+=12;
+  return h*60+mm;
+}
+function parseTimeRange(v){
+  if(v==null||String(v).trim()==='')return null;
+  var parts=String(v).split(/\s*(?:-|–|—|to)\s*/i),a=oneTime(parts[0]);
+  if(a==null)return null;
+  var b=parts[1]!=null?oneTime(parts[1]):null;
+  return {start:a,end:b!=null&&b>a?b:null};
+}
+function parseDur(v){
+  if(v==null||String(v).trim()==='')return null;
+  var s=String(v).toLowerCase(),h=s.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)/),mi=s.match(/(\d+)\s*(?:m|min|mins|minute|minutes)/);
+  if(h||mi)return Math.round((h?+h[1]*60:0)+(mi?+mi[1]:0));
+  var x=parseFloat(s);if(isNaN(x))return null;
+  return x<=10?Math.round(x*60):Math.round(x);
+}
+function parseSubs(v){
+  if(v==null)return '';
+  var s=String(v).toLowerCase().trim(),out={};
+  if(!s)return '';
+  if(/^(all|full|pcm|mpc|cpm)$/.test(s))return 'PCM';
+  s.split(/[^a-z]+/).forEach(function(w){
+    if(!w)return;
+    if(/^[pcm]{1,3}$/.test(w)){w.split('').forEach(function(l){out[l.toUpperCase()]=1});return}
+    if(w.indexOf('phy')===0)out.P=1;else if(w.indexOf('che')===0)out.C=1;else if(w.indexOf('mat')===0)out.M=1;else if(w==='o'||w==='other'||w==='school'||w==='cs'||w.indexOf('eng')===0||w.indexOf('comp')===0)out.O=1;
+    else if(w==='all')out.P=out.C=out.M=1;
+  });
+  return ['P','C','M','O'].filter(function(k){return out[k]}).join('');
+}
+function numOr(v){if(v==null)return null;var s=String(v).trim().replace(/,/g,'');if(s===''||s==='-')return null;var x=+s;return isNaN(x)?NaN:x}
+function normRow(raw){
+  var o={};
+  Object.keys(raw).forEach(function(k){o[k.toLowerCase().replace(/[^a-z0-9]/g,'')]=raw[k]});
+  if(raw.result&&typeof raw.result==='object')Object.keys(raw.result).forEach(function(k){o[k.toLowerCase().replace(/[^a-z0-9]/g,'')]=raw.result[k]});
+  var f=function(n){var a=ALIAS[n];for(var i=0;i<a.length;i++){var v=o[a[i]];if(v!==undefined&&v!==null&&String(v).trim()!=='')return v}return null};
+  var date=parseDateStr(f('date'));
+  if(!date)return {error:'The date is missing or not recognised (use 2026-11-15 or 15/11/2026).'};
+  var name=String(f('name')||'').trim(),ts=String(f('type')||'').toLowerCase(),kk;
+  var hay=ts||name.toLowerCase();
+  if(/full|jee|mock|grand|major/.test(hay))kk='full';else if(/part|unit|sectional|cumulative/.test(hay))kk='part';else kk='chapter';
+  var D=TEST_KINDS[kk];
+  if(!name)name=D.label;
+  var tr=parseTimeRange(f('start')),start=tr?tr.start:D.start,dd=parseDur(f('dur'));
+  if(dd==null)dd=tr&&tr.end?tr.end-tr.start:D.dur;
+  dd=clamp(Math.round(dd/15)*15,15,480);start=clamp(start,T0,T1-15);if(start+dd>T1)dd=T1-start;
+  var mxv=numOr(f('max'));if(mxv==null)mxv=D.max;
+  if(isNaN(mxv)||mxv<1)return {error:'Maximum marks must be a number of 1 or more.'};
+  var subs=parseSubs(f('subs'))||D.subs,syl=String(f('syl')||'').trim().slice(0,200);
+  var tot=numOr(f('tot')),sub={P:numOr(f('P')),C:numOr(f('C')),M:numOr(f('M'))},rank=numOr(f('rank')),of=numOr(f('of')),pct=numOr(f('pct'));
+  var res=null,sm=mxv/subs.length;
+  var bad=[tot,sub.P,sub.C,sub.M,rank,of,pct].some(function(x){return x!=null&&isNaN(x)});
+  if(bad)return {error:'A marks, rank or percentile value is not a number.'};
+  if(tot==null){var sv=subs.split('').filter(function(k){return sub[k]!=null});if(sv.length)tot=sv.reduce(function(a,k){return a+sub[k]},0)}
+  if(tot!=null){
+    if(tot<-mxv||tot>mxv)return {error:'Marks '+tot+' are outside ±'+mxv+'.'};
+    res={tot:tot};
+    if(subs.length>1)subs.split('').forEach(function(k){if(sub[k]!=null){if(Math.abs(sub[k])>sm)res._bad=k;res[k]=sub[k]}});
+    if(res._bad)return {error:SUBS[res._bad]+' marks are outside ±'+sm+'.'};
+    if(rank!=null){if(rank<1||rank%1)return {error:'Rank must be a whole number, 1 or higher.'};res.rank=rank}
+    if(of!=null){if(of<1||of%1)return {error:'Batch size must be a whole number, 1 or higher.'};res.of=of}
+    if(res.rank&&res.of&&res.rank>res.of)return {error:'Rank is larger than the number of students.'};
+    if(pct!=null){if(pct<0||pct>100)return {error:'Percentile must be between 0 and 100.'};res.pct=pct}
+  }
+  return {test:{date:date,name:name,k:kk,start:start,dur:dd,max:mxv,subs:subs,syl:syl,res:res}};
+}
+function analyseImport(text){
+  var out={rows:[],err:null,c:{add:0,upd:0,dup:0,bad:0}};
+  text=String(text||'').trim();
+  if(!text)return out;
+  var list;
+  try{
+    if(text[0]==='{'||text[0]==='['){
+      var j=JSON.parse(text);
+      list=Array.isArray(j)?j:(j.tests||j.exams||j.schedule||[]);
+    }else{
+      var rows=parseCSV(text);
+      if(rows.length<2){out.err='Add a header row (date,name,type,...) and at least one test below it.';return out}
+      var hdr=rows[0].map(function(h){return String(h).trim()});
+      list=rows.slice(1).map(function(r){var o={};hdr.forEach(function(h,i){o[h]=r[i]!==undefined?String(r[i]).trim():''});return o});
+    }
+  }catch(e){out.err='This is not valid JSON or CSV. '+(e&&e.message?e.message:'');return out}
+  if(!Array.isArray(list)||!list.length){out.err='No tests found. For JSON, put them in a "tests" list.';return out}
+  var have={};
+  allTests().forEach(function(t){have[t.date+'|'+t.title.toLowerCase().trim()]=t});
+  var seen={};
+  list.slice(0,500).forEach(function(raw,i){
+    var r={n:i+1,status:'bad',reason:''};
+    if(!raw||typeof raw!=='object'){r.reason='Not a test entry.';out.rows.push(r);out.c.bad++;return}
+    var x=normRow(raw);
+    if(x.error){r.reason=x.error;out.rows.push(r);out.c.bad++;return}
+    var t=x.test,key=t.date+'|'+t.name.toLowerCase().trim();
+    r.test=t;
+    if(seen[key]){r.status='dup';r.reason='Repeated in this file.';out.c.dup++}
+    else if(have[key]){
+      if(t.res&&!have[key].test.res){r.status='upd';r.target=have[key].id;out.c.upd++}
+      else{r.status='dup';r.reason='Already in your planner.';out.c.dup++}
+    }else{r.status='add';out.c.add++}
+    seen[key]=1;out.rows.push(r);
+  });
+  return out;
+}
+var impState=null;
+function renderImportPreview(){
+  var host=$('#imp-prev'),btn=$('#imp-go');if(!host||!btn)return;
+  var a=impState=analyseImport($('#imp-text').value);
+  host.textContent='';
+  if(a.err){var p=document.createElement('p');p.className='err';p.textContent=a.err;host.appendChild(p);btn.disabled=true;btn.textContent='Add tests';return}
+  if(!a.rows.length){var e=document.createElement('p');e.className='empty';e.textContent='Nothing to preview yet. Paste a schedule above or choose a file.';host.appendChild(e);btn.disabled=true;btn.textContent='Add tests';return}
+  var s=document.createElement('p');s.className='imp-sum';
+  s.textContent=a.c.add+' new test'+(a.c.add===1?'':'s')+(a.c.upd?', '+a.c.upd+' result'+(a.c.upd===1?'':'s')+' to attach':'')+(a.c.dup?', '+a.c.dup+' skipped':'')+(a.c.bad?', '+a.c.bad+' with a problem':'');
+  host.appendChild(s);
+  var ul=document.createElement('ul');ul.className='lst imp-list';
+  var label={add:'New',upd:'Result',dup:'Skipped',bad:'Problem'};
+  a.rows.slice(0,40).forEach(function(r){
+    var li=document.createElement('li');li.className='imp-row '+r.status;
+    var tag=document.createElement('span');tag.className='pill '+(r.status==='bad'?'over':r.status==='dup'?'':'ok');tag.textContent=label[r.status];
+    var tx=document.createElement('span');tx.className='imp-tx';
+    if(r.test){
+      var b=document.createElement('b');b.textContent=r.test.name;tx.appendChild(b);
+      var sm=document.createElement('small');
+      sm.textContent=shortDate(r.test.date)+' · '+clock(r.test.start)+' · '+dur(r.test.dur)+' · '+TEST_KINDS[r.test.k].label+' · '+r.test.max+' marks · '+r.test.subs.split('').map(function(k){return SUBS[k]}).join(', ')+(r.test.res?' · result '+r.test.res.tot:'')+(r.reason?' · '+r.reason:'');
+      tx.appendChild(sm);
+    }else{
+      var b2=document.createElement('b');b2.textContent='Row '+r.n;tx.appendChild(b2);
+      var s2=document.createElement('small');s2.textContent=r.reason;tx.appendChild(s2);
+    }
+    li.appendChild(tag);li.appendChild(tx);ul.appendChild(li);
+  });
+  host.appendChild(ul);
+  if(a.rows.length>40){var more=document.createElement('p');more.className='hint';more.textContent='Showing the first 40 of '+a.rows.length+' rows. All valid rows will be added.';host.appendChild(more)}
+  var n=a.c.add+a.c.upd;
+  btn.disabled=!n;
+  btn.textContent=n?('Add '+a.c.add+' test'+(a.c.add===1?'':'s')+(a.c.upd?' + '+a.c.upd+' result'+(a.c.upd===1?'':'s'):'')):'Add tests';
+}
+function openImport(){
+  ui.overlay={kind:'import'};
+  openOv('<form class="sheet wide" id="imf" novalidate role="dialog" aria-modal="true" aria-labelledby="imh">'+
+    '<h3 id="imh">Import test schedule</h3>'+
+    '<p class="empty" style="margin:-4px 0 0">Paste a schedule as CSV or JSON, or choose a file. Importing the same file twice is safe: tests already in your planner are skipped.</p>'+
+    '<label class="f">Choose a file<input type="file" id="imp-file" accept=".csv,.json,.txt,text/csv,application/json,text/plain"></label>'+
+    '<label class="f">Or paste it here<textarea id="imp-text" class="imp-ta" rows="6" spellcheck="false" placeholder="date,name,type,start,duration,max,subjects,syllabus"></textarea></label>'+
+    '<details class="fmt"><summary>Format and examples</summary>'+
+      '<p class="empty">One row per test. Only <b>date</b> is required. Dates can be 2026-11-15, 15/11/2026 or 15 Nov 2026. <b>type</b> is full, part or chapter. <b>start</b> is 09:00 or 4 pm, <b>duration</b> is minutes or hours (180 or 3h). <b>subjects</b> is P, C, M or PCM. To import results as well, add <b>score</b>, <b>physics</b>, <b>chemistry</b>, <b>maths</b>, <b>rank</b> and <b>of</b> (batch size) columns.</p>'+
+      '<pre class="ex" id="ex-csv"></pre><div class="acts"><button type="button" class="btn sm" data-act="imp-copy" data-w="csv">Copy CSV example</button><button type="button" class="btn sm" data-act="imp-copy" data-w="json">Copy JSON example</button></div></details>'+
+    '<div id="imp-prev" aria-live="polite"></div>'+
+    '<div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri" id="imp-go" disabled>Add tests</button></div></form>','#imp-text');
+  $('#ex-csv').textContent=IMP_EXAMPLE_CSV;
+  renderImportPreview();
+}
+function applyImport(){
+  var a=impState;if(!a)return;
+  var rows=a.rows.filter(function(r){return r.status==='add'||r.status==='upd'});
+  if(!rows.length)return;
+  var first=rows.filter(function(r){return r.status==='add'}).map(function(r){return r.test.date}).sort()[0];
+  closeOv();
+  mutate(function(){
+    rows.forEach(function(r){
+      var t=r.test;
+      if(r.status==='add'){
+        state.tasks.push({id:uid(),title:t.name,kind:'T',type:TEST_KINDS[t.k].label,date:t.date,start:t.start,dur:t.dur,done:!!t.res,sample:false,test:{k:t.k,max:t.max,subs:t.subs,syl:t.syl,res:t.res}});
+      }else{
+        var ex=get(r.target);if(ex&&ex.test){ex.test.res=t.res;ex.done=true}
+      }
+    });
+  },'Imported '+a.c.add+' test'+(a.c.add===1?'':'s')+(a.c.upd?' and '+a.c.upd+' result'+(a.c.upd===1?'':'s'):'')+(a.c.dup?' ('+a.c.dup+' skipped)':''));
+  if(first&&ui.view!=='tests'){ui.sel=first;render()}
+}
+
+/* ---------- samples for tests ---------- */
+function sampleTests(){
+  var out=[];
+  function add(off,name,k,max,subs,sv,tot,rank,of,syl,start,d,hasRes){
+    var res=null;
+    if(hasRes){
+      res={tot:tot!=null?tot:sv.reduce(function(a,b){return a+b},0)};
+      if(sv)subs.split('').forEach(function(s,i){res[s]=sv[i]});
+      res.rank=rank;res.of=of;
+    }
+    out.push({id:uid(),title:name,kind:'T',type:TEST_KINDS[k].label,date:addDays(TODAY,off),start:start,dur:d,done:!!res,sample:true,test:{k:k,max:max,subs:subs,syl:syl,res:res}});
+  }
+  var past=[
+    [-74,'Chapter test: Kinematics','chapter',100,'P',null,58,31,140,'Kinematics',960,60],
+    [-66,'Chapter test: Mole concept','chapter',100,'C',null,64,25,140,'Mole concept',960,60],
+    [-59,'Full test 1','full',300,'PCM',[52,61,44],null,410,1200,'Full syllabus',540,180],
+    [-52,'Chapter test: Limits and derivatives','chapter',100,'M',null,55,40,140,'Limits, continuity, differentiability',960,60],
+    [-45,'Part test 1','part',200,'PC',[63,70],null,38,140,'Physics and Chemistry, units 1-5',960,120],
+    [-38,'Full test 2','full',300,'PCM',[61,72,55],null,301,1200,'Full syllabus',540,180],
+    [-31,'Chapter test: Thermodynamics','chapter',100,'C',null,70,20,140,'Chemical thermodynamics',960,60],
+    [-24,'Full test 3','full',300,'PCM',[68,75,63],null,244,1200,'Full syllabus',540,180],
+    [-17,'Chapter test: Rotational motion','chapter',100,'P',null,66,22,140,'Rotational motion',960,60],
+    [-10,'Full test 4','full',300,'PCM',[72,78,69],null,190,1200,'Full syllabus',540,180],
+    [-3,'Chapter test: Definite integrals','chapter',100,'M',null,74,14,140,'Definite integrals',960,60]
+  ];
+  past.forEach(function(p){add(p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7],p[8],p[9],p[10],p[11],true)});
+  add(-5,'Part test 2','part',200,'PM',null,0,0,0,'Physics and Maths, units 6-9',960,120,false);
+  [[4,'Chapter test: Electrostatics','chapter',100,'P','Electric charges and fields',960,60],
+   [9,'Full test 5','full',300,'PCM','Full syllabus',540,180],
+   [16,'Chapter test: Chemical bonding','chapter',100,'C','Chemical bonding',960,60],
+   [23,'Full test 6','full',300,'PCM','Full syllabus',540,180],
+   [37,'Full test 7','full',300,'PCM','Full syllabus',540,180],
+   [51,'Part test 3','part',200,'PCM','Units 1-12',960,120]].forEach(function(u){add(u[0],u[1],u[2],u[3],u[4],null,null,null,null,u[5],u[6],u[7],false)});
+  return out;
+}
+
+/* ---------- sync note for settings ---------- */
+function syncBlock(){
+  var txt,btns;
+  if(!sb){txt='Sync is not set up. Add your Supabase URL and key in config.js (see README). Until then the plan is saved on this device only.';btns=''}
+  else if(sbUser){txt='Signed in as '+(sbUser.email||'')+'. '+SAVE_TXT[saveState]+'. Changes appear on your other devices within seconds.';btns='<button type="button" class="btn sm" data-act="sync-now">Sync now</button> <button type="button" class="btn sm" data-act="sign-out">Sign out</button>'}
+  else{txt='Not signed in, so the plan is saved on this device only. Sign in on your phone and your laptop with the same account to share it.';btns='<button type="button" class="btn sm" data-act="auth">Sign in</button>'}
+  return '<div class="f"><span>Sync between devices</span><small>'+esc(txt)+'</small><div class="acts">'+btns+'</div></div>';
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var tb=e.target.closest&&e.target.closest('#tbs');
+  if(tb&&e.target===tb){
+    var r=tb.getBoundingClientRect(),m=T0+Math.floor((e.clientY-r.top)/HP*2)*30;
+    openTaskForm({date:ui.sel,start:clamp(m,T0,T1-60)});return;
+  }
+  var el=e.target.closest('[data-act]');if(!el)return;
+  var a=el.dataset.act,id=el.dataset.id;
+  if(ui.suppress&&(a==='edit')){return}
+  switch(a){
+    case 'view':ui.view=el.dataset.v;ui.menu=ui.confirm=null;render();break;
+    case 'prev':case 'next':{
+      var dir=a==='next'?1:-1,d=parse(ui.sel);
+      if(ui.view==='month'){var day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+dir);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));ui.sel=iso(d)}
+      else ui.sel=addDays(ui.sel,(ui.view==='week'?7:1)*dir);
+      ui.menu=ui.confirm=null;render();break}
+    case 'today':ui.sel=TODAY;ui.menu=ui.confirm=null;render();break;
+    case 'pick':ui.sel=el.dataset.date;ui.menu=ui.confirm=null;render();break;
+    case 'add':openTaskForm({date:el.dataset.date||ui.sel});break;
+    case 'add-bank':openTaskForm({bank:true});break;
+    case 'edit':{var et=get(id);if(et&&et.test)openTestForm({id:id});else openTaskForm({id:id});break}
+    case 'toggle':toggleDone(id);break;
+    case 'assign':moveTask(id,ui.sel);break;
+    case 'menu':ui.menu=ui.menu===el.dataset.m?null:el.dataset.m;ui.confirm=null;renderPanel();break;
+    case 'menu-close':ui.menu=ui.confirm=null;renderPanel();break;
+    case 'tpl':if(onDay(ui.sel).length){ui.confirm={type:'tpl',key:el.dataset.key};ui.menu=null;renderPanel()}else applyTemplate(el.dataset.key);break;
+    case 'tpl-yes':applyTemplate(ui.confirm.key);break;
+    case 'copy':copyDay(el.dataset.mode);break;
+    case 'clear':ui.confirm={type:'clear'};ui.menu=null;renderPanel();break;
+    case 'clear-yes':{var dd=ui.sel;ui.confirm=null;mutate(function(){state.tasks=state.tasks.filter(function(t){return t.date!==dd})},'Cleared '+shortDate(dd));break}
+    case 'undo':if(ui.undo){ui.undo();ui.undo=null;$('#toast').innerHTML=''}break;
+    case 'settings':openSettings();break;
+    case 'close-ov':closeOv();break;
+    case 'del-task':{var t=get(ui.overlay&&ui.overlay.id);if(t){var tid=t.id,tt=t.title;closeOv();mutate(function(){state.tasks=state.tasks.filter(function(x){return x.id!==tid})},'Deleted “'+tt+'”')}break}
+    case 'qdur':{var inp=$('#tf-dur');if(inp)inp.value=el.dataset.m;break}
+    case 'reset-arm':el.dataset.act='reset-yes';el.textContent='Erase everything? Click again';break;
+    case 'reset-yes':state.tasks=[];state.settings=Object.assign({},DEFAULTS);rebuild();persist();closeOv();render();toast('All data erased');break;
+    case 'clear-samples':mutate(function(){state.tasks=state.tasks.filter(function(t){return !t.sample})},'Sample plan cleared');break;
+    case 'add-test':openTestForm({date:el.dataset.date||ui.sel});break;
+    case 'import':openImport();break;
+    case 'open-result':{var rid=id;if(ui.overlay)closeOv();openResultForm(rid);break}
+    case 'del-test':{var dt=get(ui.overlay&&ui.overlay.id);if(dt){var did=dt.id,dn=dt.title;closeOv();mutate(function(){state.tasks=state.tasks.filter(function(x){return x.id!==did})},'Deleted \u201c'+dn+'\u201d')}break}
+    case 'del-result':{var rt=get(ui.overlay&&ui.overlay.id);if(rt){var rid2=rt.id;closeOv();mutate(function(){var x=get(rid2);if(x&&x.test)x.test.res=null},'Result removed')}break}
+    case 'tkind':ui.tf.kind=el.dataset.v;render();break;
+    case 'trange':ui.tf.range=+el.dataset.v;render();break;
+    case 'series':{var sk=el.dataset.k;ui.series[sk]=!ui.series[sk];if(!ui.series.tot&&!ui.series.P&&!ui.series.C&&!ui.series.M)ui.series.tot=true;render();break}
+    case 'rankmode':ui.rank=el.dataset.m;render();break;
+    case 'sample-tests':mutate(function(){sampleTests().forEach(function(t){state.tasks.push(t)})},'Sample tests added. Remove them any time with Clear samples.');break;
+    case 'imp-copy':{var txt=el.dataset.w==='json'?IMP_EXAMPLE_JSON:IMP_EXAMPLE_CSV,fail=function(){toast('Copy is blocked here. Select the example text and copy it.')};try{navigator.clipboard.writeText(txt).then(function(){toast('Example copied')},fail)}catch(x){fail()}break}
+    case 'sync-now':if(dbDoc){dirty=true;flush();toast('Syncing to your account')}else toast('Sign in first to sync.');break;
+    case 'auth':if(!sb)toast('Sync is not set up yet. See config.js.');else openAuth();break;
+    case 'auth-magic':authDo('magic');break;
+    case 'auth-signup':authDo('signup');break;
+    case 'sign-out':if(sb)sb.auth.signOut().then(function(){try{localStorage.removeItem(LS)}catch(e){}location.reload()});break;
+    case 'keep-samples':mutate(function(){state.tasks.forEach(function(t){t.sample=false})},'Sample tasks are now yours to edit');break;
+  }
+});
+document.addEventListener('dblclick',function(e){
+  var c=e.target.closest('.cell');
+  if(c){ui.sel=c.dataset.date;ui.view='day';render()}
+});
+document.addEventListener('submit',function(e){
+  e.preventDefault();
+  if(e.target.id==='tf')saveTask(e.target);
+  else if(e.target.id==='sf')saveSettings(e.target);
+  else if(e.target.id==='xf')saveTest(e.target);
+  else if(e.target.id==='rf')saveResult(e.target);
+  else if(e.target.id==='imf')applyImport();
+  else if(e.target.id==='af')authDo('signin');
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.name==='kind'){var s=$('#tf-type');if(s)s.innerHTML=typeOptions(t.value,'')}
+  if(t.name==='tk'&&ui.overlay&&ui.overlay.kind==='test'&&!ui.overlay.id){
+    var D=TEST_KINDS[t.value],setv=function(q,v){var x=$(q);if(x)x.value=v};
+    setv('#xf-dur',D.dur);setv('#xf-max',D.max);setv('#xf-start',pad(Math.floor(D.start/60))+':'+pad(D.start%60));
+    document.querySelectorAll('#xf [name=sub]').forEach(function(c){c.checked=D.subs.indexOf(c.value)>=0});
+  }
+  if(t.id==='imp-file'&&t.files&&t.files[0]){
+    var fr=new FileReader();
+    fr.onload=function(){var ta=$('#imp-text');if(ta){ta.value=String(fr.result||'');renderImportPreview()}};
+    fr.readAsText(t.files[0]);
+  }
+  if(t.id==='tf-bank'){['#tf-date','#tf-start'].forEach(function(q){var i=$(q);if(i)i.disabled=t.checked})}
+});
+var impT=0;
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.id==='rf-tot')t.dataset.manual='1';
+  if(t.dataset&&t.dataset.sub){
+    var tot=$('#rf-tot');
+    if(tot&&tot.dataset.manual!=='1'){
+      var sum=0,any=false;
+      document.querySelectorAll('[data-sub]').forEach(function(i){if(i.value!==''&&!isNaN(+i.value)){sum+=+i.value;any=true}});
+      tot.value=any?String(sum):'';
+    }
+  }
+  if(t.id==='imp-text'){clearTimeout(impT);impT=setTimeout(renderImportPreview,150)}
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){if($('#ov').firstChild)closeOv();else if(ui.menu||ui.confirm){ui.menu=ui.confirm=null;renderPanel()}}
+});
+
+/* HTML5 drag and drop: bank rows and week cards onto days, bank rows onto the timeline */
+var dropEl=null;
+document.addEventListener('dragstart',function(e){
+  var c=e.target.closest&&e.target.closest('[data-drag]');if(!c)return;
+  e.dataTransfer.setData('text/plain',c.dataset.drag);e.dataTransfer.effectAllowed='move';
+  setTimeout(function(){c.classList.add('dragging')},0);
+});
+document.addEventListener('dragover',function(e){
+  var z=e.target.closest&&e.target.closest('[data-drop]');
+  if(dropEl&&dropEl!==z)dropEl.classList.remove('drop');
+  dropEl=z;
+  if(z){e.preventDefault();z.classList.add('drop');e.dataTransfer.dropEffect='move'}
+});
+document.addEventListener('drop',function(e){
+  var z=e.target.closest&&e.target.closest('[data-drop]');if(!z)return;
+  e.preventDefault();z.classList.remove('drop');
+  var id=e.dataTransfer.getData('text/plain');if(!get(id))return;
+  var m=null;
+  if(z.dataset.tl){var r=z.getBoundingClientRect();m=clamp(Math.round(((e.clientY-r.top)/HP*60+T0)/15)*15,T0,T1-15)}
+  moveTask(id,z.dataset.drop,m);
+});
+document.addEventListener('dragend',function(){
+  if(dropEl)dropEl.classList.remove('drop');dropEl=null;
+  document.querySelectorAll('.dragging').forEach(function(x){x.classList.remove('dragging')});
+});
+
+/* pointer drag on the day timeline: move (whole block with a mouse, grip with touch) and resize (bottom edge) */
+var drag=null;
+document.addEventListener('pointerdown',function(e){
+  var blk=e.target.closest&&e.target.closest('.tb');if(!blk||e.target.closest('.chk'))return;
+  var rs=!!e.target.closest('[data-resize]'),gr=!!e.target.closest('[data-grip]');
+  if(e.pointerType==='touch'&&!rs&&!gr)return;
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  var t=get(blk.dataset.id);if(!t)return;
+  drag={blk:blk,t:t,mode:rs?'rs':'mv',y0:e.clientY,s0:t.start,d0:t.dur,ns:t.start,nd:t.dur,moved:false,pid:e.pointerId};
+});
+document.addEventListener('pointermove',function(e){
+  if(!drag||e.pointerId!==drag.pid)return;
+  var dy=e.clientY-drag.y0;
+  if(!drag.moved){
+    if(Math.abs(dy)<4)return;
+    drag.moved=true;
+    try{drag.blk.setPointerCapture(e.pointerId)}catch(x){}
+    drag.blk.classList.add('dragging-now');
+  }
+  var dm=Math.round(dy/HP*4)*15;
+  if(drag.mode==='mv'){drag.ns=clamp(drag.s0+dm,T0,T1-drag.d0);drag.blk.style.top=((drag.ns-T0)/60*HP)+'px'}
+  else{drag.nd=clamp(drag.d0+dm,15,T1-drag.s0);drag.blk.style.height=Math.max(12,drag.nd/60*HP-2)+'px'}
+  var sm=drag.blk.querySelector('small');
+  if(sm)sm.textContent=range(drag.ns,drag.ns+drag.nd)+' · '+dur(drag.nd)+' · '+drag.t.type;
+  e.preventDefault();
+});
+function endDrag(e,cancel){
+  if(!drag||e.pointerId!==drag.pid)return;
+  var d=drag;drag=null;
+  if(!d.moved)return;
+  ui.suppress=true;setTimeout(function(){ui.suppress=false},50);
+  if(cancel||(d.ns===d.s0&&d.nd===d.d0)){render();return}
+  mutate(function(){d.t.start=d.ns;d.t.dur=d.nd;d.t.sample=false},d.mode==='mv'?'Moved to '+clock(d.ns):'Duration set to '+dur(d.nd));
+}
+document.addEventListener('pointerup',function(e){endDrag(e,false)});
+document.addEventListener('pointercancel',function(e){endDrag(e,true)});
+
+/* ---------- start ---------- */
+var hadLocal=false;
+(function init(){
+  var local=hydrate(readLS());
+  if(local){state=local;hadLocal=true}
+  else state.tasks=seedSamples();
+  rebuild();render();
+  connect();
+})();
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+})();
+</script>
+
+</body>
+</html>

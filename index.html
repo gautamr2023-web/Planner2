@@ -153,6 +153,9 @@ button{cursor:pointer}
 .timerw{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:55;width:min(560px,calc(100% - 24px))}
 .timerw[hidden]{display:none}
 body.has-timer{padding-bottom:130px}
+.gapb{position:absolute;left:2px;right:2px;border-radius:6px;background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in srgb,var(--ink) 5%,transparent) 6px 7px);border:1px dashed var(--line);pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-3)}
+.tmn{margin:0 0 8px;font-size:12px;color:var(--ink-2)}
+#lf .kopt .kb b{font-weight:700;margin-right:3px}
 .has-timer .toastw{bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 .tmr{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;box-shadow:var(--shadow);padding:10px 14px 12px}
 .tmr.up{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok),var(--shadow)}
@@ -498,8 +501,8 @@ var LS='jee-planner-v1';
 var state={v:1,updated:0,settings:Object.assign({},DEFAULTS),tasks:[]};
 var idx=new Map();
 var ui={bf:'all',hideMissed:false,hideReview:false,view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
-var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'']};
-var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:''}};
+var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'',t.log||0]};
+var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:'',log:a[11]&&typeof a[11]==='object'?a[11]:null}};
 var fixTest=function(t){
   var x=t.test;
   if(x&&(!x.k||!(x.max>0)||typeof x.subs!=='string'||!x.subs))t.test=null;
@@ -521,12 +524,28 @@ function rebuild(){
 var get=function(id){return state.tasks.find(function(t){return t.id===id})};
 var onDay=function(d){return idx.get(d)||[]};
 var bank=function(){return state.tasks.filter(function(t){return !t.date})};
+function eff(t){
+  if(!t.done)return 0;
+  var l=t.log;if(!l)return t.dur;
+  if(l.m!=null)return Math.max(0,Math.min(l.m,Math.round(t.dur*1.5)));
+  if(l.p!=null)return Math.round(t.dur*l.p/100);
+  return t.dur;
+}
+function gapsOf(d){
+  var l=onDay(d).filter(function(t){return t.start!=null&&t.dur>0});
+  if(l.length<2)return [];
+  var out=[],cur=l[0].start+l[0].dur;
+  for(var i=1;i<l.length;i++){var t=l[i];if(t.start-cur>=5)out.push({s:cur,e:t.start});cur=Math.max(cur,t.start+t.dur)}
+  return out;
+}
 function dayStats(d){
-  var r={study:0,done:0,rest:0,n:0,nd:0,sub:{P:0,C:0,M:0,T:0}};
+  var r={study:0,done:0,rest:0,gap:0,n:0,nd:0,sub:{P:0,C:0,M:0,T:0}};
   onDay(d).forEach(function(t){
     r.n++;if(t.done)r.nd++;
-    if(t.kind==='R'){r.rest+=t.dur}else{r.study+=t.dur;r.sub[t.kind]+=t.dur;if(t.done)r.done+=t.dur}
+    if(t.kind==='R'){r.rest+=t.dur}else{r.study+=t.dur;r.sub[t.kind]+=t.dur;r.done+=eff(t)}
   });
+  gapsOf(d).forEach(function(g){r.gap+=g.e-g.s});
+  r.rest+=r.gap;
   return r;
 }
 function findSlot(date,d,from,exId){
@@ -680,7 +699,15 @@ function mutate(fn,msg){
   var m=typeof msg==='function'?msg():msg;
   if(m)toast(m,function(){state.tasks=JSON.parse(snap);rebuild();persist();render()});
 }
-function toggleDone(id){var t=get(id);if(!t)return;t.done=!t.done;rebuild();persist();render()}
+function toggleDone(id){
+  var t=get(id);if(!t)return;
+  var now=!t.done;
+  mutate(function(){t.done=now;t.log=null},now?null:null);
+  if(now&&t.kind!=='R'&&!t.test){
+    var u=function(){t.done=false;t.log=null;rebuild();persist();render()};
+    toast('Marked done',u,'Only partly?',function(){openLog(id)});
+  }else ui.undo=null;
+}
 
 /* backlog: send unfinished work to the bank, and place it back automatically */
 var movable=function(t){return t&&t.date&&!t.test&&t.kind!=='R'&&!t.done};
@@ -862,7 +889,7 @@ function monthHTML(){
 function cardHTML(t,cls){
   return '<div class="blk '+cls+' k-'+t.kind+(t.done?' done':'')+'" data-drag="'+t.id+'" draggable="true">'+
     '<span class="chip">'+(t.kind==='R'?'R':t.kind)+'</span>'+
-    '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+(t.date?range(t.start,t.start+t.dur)+' · ':'')+dur(t.dur)+' · '+esc(t.type)+resNote(t)+'</small></button>'+
+    '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+(t.date?range(t.start,t.start+t.dur)+' · ':'')+dur(t.dur)+' · '+esc(t.type)+resNote(t)+logNote(t)+'</small></button>'+
     (cls==='row'&&t.date===TODAY&&!t.done&&t.kind!=='R'?'<button class="mvb" data-act="timer-start" data-id="'+t.id+'" aria-label="Start a timer for “'+esc(t.title)+'”" title="Start timer">'+PLAY+'</button>':'')+
     (cls==='row'&&movable(t)?'<button class="mvb" data-act="to-bank" data-id="'+t.id+'" aria-label="Move “'+esc(t.title)+'” to the bank" title="Move to the bank">'+TRAY+'</button>':'')+
     chkHTML(t)+'</div>';
@@ -905,12 +932,16 @@ function dayHTML(){
   var list=onDay(ui.sel),L=layoutCols(list),h='<div class="tlw" id="tlw"><div class="tli" style="height:'+((T1-T0)/60*HP)+'px">';
   for(var m=T0;m<=T1;m+=60)h+='<div class="hl" style="top:'+((m-T0)/60*HP)+'px"><span>'+hourLabel(m)+'</span></div>';
   h+='<div class="tbs" id="tbs" data-drop="'+ui.sel+'" data-tl="1">';
+  gapsOf(ui.sel).forEach(function(g){
+    var ghh=(g.e-g.s)/60*HP;
+    h+='<div class="gapb" style="top:'+((g.s-T0)/60*HP)+'px;height:'+ghh+'px">'+(ghh>=20?'<span>'+(g.e-g.s>90?'Free time':'Rest')+' · '+dur(g.e-g.s)+'</span>':'')+'</div>';
+  });
   list.forEach(function(t){
     var top=Math.max(0,(t.start-T0)/60*HP),ht=Math.max(12,t.dur/60*HP-2),l=L[t.id]||{col:0,n:1};
     var size=t.dur<=20?' xs':t.dur<45?' sm':'';
     h+='<div class="blk tb k-'+t.kind+(t.done?' done':'')+size+'" data-id="'+t.id+'" style="top:'+top+'px;height:'+ht+'px;left:calc('+(l.col/l.n*100)+'% + 2px);width:calc('+(100/l.n)+'% - 4px)">'+
       '<span class="grip" data-grip="1" aria-hidden="true"></span><span class="chip">'+t.kind+'</span>'+
-      '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+range(t.start,t.start+t.dur)+' · '+dur(t.dur)+' · '+esc(t.type)+resNote(t)+'</small></button>'+
+      '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+range(t.start,t.start+t.dur)+' · '+dur(t.dur)+' · '+esc(t.type)+resNote(t)+logNote(t)+'</small></button>'+
       chkHTML(t)+'<span class="rs" data-resize="1" aria-hidden="true"></span></div>';
   });
   if(ui.sel===TODAY){var n=new Date(),nm=n.getHours()*60+n.getMinutes();if(nm>=T0&&nm<=T1)h+='<div class="now" style="top:'+((nm-T0)/60*HP)+'px"></div>'}
@@ -918,15 +949,78 @@ function dayHTML(){
   return h+'</div></div></div>';
 }
 
+
+/* ---------- progress log: partly done, focus, questions, what got in the way ---------- */
+var FOCUS=['Distracted','Low','OK','Good','Sharp'],WHY=['Distracted','Tired','Hard topic','Phone','Ran out of time'];
+var near25=function(p){return clamp(Math.round(p/25)*25,25,100)};
+function openLog(id,pre){
+  var t=get(id);if(!t)return;
+  pre=pre||{};
+  var l=t.log||{},p=pre.p!=null?pre.p:(l.p!=null?l.p:100),m=pre.m!=null?pre.m:(l.m!=null?l.m:Math.round(t.dur*p/100));
+  ui.overlay={kind:'log',id:id};
+  var ps=[25,50,75,100].map(function(x){return '<label class="kopt"><input type="radio" name="p" value="'+x+'"'+(p===x?' checked':'')+'><span class="kb">'+x+'%</span></label>'}).join('');
+  var fs=[1,2,3,4,5].map(function(x){return '<label class="kopt"><input type="radio" name="f" value="'+x+'"'+(l.f===x?' checked':'')+'><span class="kb"><b>'+x+'</b> '+FOCUS[x-1]+'</span></label>'}).join('');
+  var ws=WHY.map(function(x){return '<label class="kopt"><input type="checkbox" name="w" value="'+x+'"'+((l.w||[]).indexOf(x)>=0?' checked':'')+'><span class="kb">'+x+'</span></label>'}).join('');
+  var q=l.q||[];
+  openOv('<form class="sheet" id="lf" novalidate role="dialog" aria-modal="true" aria-labelledby="lfh" autocomplete="off">'+
+    '<h3 id="lfh">How did it go?</h3><p class="empty" style="margin:-4px 0 0"><b>'+esc(t.title)+'</b> · planned '+dur(t.dur)+'</p>'+
+    '<fieldset class="kinds"><legend>How much of it did you finish?</legend>'+ps+'</fieldset>'+
+    '<div class="grid3"><label class="f">Minutes studied<input type="number" id="lf-m" name="m" min="0" max="720" step="5" value="'+m+'"></label>'+
+    '<label class="f">Questions done<input type="number" id="lf-qd" name="qd" min="0" step="1" value="'+(q[0]!=null?q[0]:'')+'"></label>'+
+    '<label class="f">Questions planned<input type="number" id="lf-qp" name="qp" min="0" step="1" value="'+(q[1]!=null?q[1]:'')+'"></label></div>'+
+    '<fieldset class="kinds"><legend>How focused were you?</legend>'+fs+'</fieldset>'+
+    '<fieldset class="kinds"><legend>What got in the way? (optional)</legend>'+ws+'</fieldset>'+
+    '<label class="f">Note<input name="n" maxlength="140" placeholder="e.g. got stuck on torque problems" value="'+esc(l.n||'')+'"></label>'+
+    '<label class="cb"><input type="checkbox" name="rest" id="lf-rest"><span id="lf-rl"></span></label>'+
+    '<p class="err" hidden></p>'+
+    '<div class="actions">'+(t.done?'<button type="button" class="btn" data-act="log-undone">Mark not done</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save</button></div></form>');
+  $('#lf-m').dataset.auto=pre.m!=null||l.m!=null?'0':'1';
+  lfSync($('#lf'),true);
+}
+function lfRest(t,p){return Math.max(15,Math.ceil(t.dur*(100-p)/100/15)*15)}
+function lfSync(f,init){
+  var t=get(ui.overlay&&ui.overlay.id);if(!t||!f)return;
+  var p=+(f.querySelector('[name=p]:checked')||{}).value||100,m=$('#lf-m');
+  if(!init&&m.dataset.auto==='1')m.value=Math.round(t.dur*p/100);
+  var rc=$('#lf-rest'),rl=$('#lf-rl');
+  if(p<100){rl.textContent='Move the unfinished part ('+dur(lfRest(t,p))+') to the backlog';rc.disabled=false;if(init&&!t.log)rc.checked=true;if(!init&&rc.dataset.touched!=='1')rc.checked=true}
+  else{rl.textContent='';rc.checked=false;rc.disabled=true}
+  rc.parentNode.hidden=p>=100;
+}
+function saveLog(form){
+  var id=ui.overlay&&ui.overlay.id,t=get(id);if(!t)return closeOv();
+  var fd=new FormData(form),p=+fd.get('p')||100,m=+fd.get('m');
+  if(isNaN(m)||m<0||m>720)return showErr(form,'Minutes studied must be between 0 and 720.','#lf-m');
+  var qd=fd.get('qd')===''?null:+fd.get('qd'),qp=fd.get('qp')===''?null:+fd.get('qp');
+  if((qd!=null&&(isNaN(qd)||qd<0))||(qp!=null&&(isNaN(qp)||qp<0)))return showErr(form,'Question counts must be 0 or more.','#lf-qd');
+  var log={p:p,m:Math.round(m)};
+  var f=+fd.get('f');if(f>=1&&f<=5)log.f=f;
+  var w=fd.getAll('w');if(w.length)log.w=w;
+  var n=String(fd.get('n')||'').trim();if(n)log.n=n;
+  if(qd!=null||qp!=null)log.q=[qd,qp];
+  var rest=fd.get('rest')==='on'&&p<100,moved=0;
+  closeOv();
+  mutate(function(){
+    t.done=true;t.log=log;t.sample=false;
+    if(rest){
+      var base=t.title.replace(/ \(rest\)$/,'')+' (rest)';
+      if(!state.tasks.some(function(x){return x.title===base&&!x.date&&x.from===t.date})){
+        state.tasks.push({id:uid(),title:base,kind:t.kind,type:t.type,date:'',start:null,dur:lfRest(t,p),done:false,sample:false,from:t.date||''});moved=lfRest(t,p);
+      }
+    }
+  },function(){return 'Logged '+p+'% done'+(log.f?' · focus '+log.f+'/5':'')+(moved?'. '+dur(moved)+' moved to the backlog.':'.')});
+}
+
 /* ---------- weekly review ---------- */
 function weekData(a){
-  var r={a:a,days:[],plan:0,done:0,sub:{P:{p:0,d:0},C:{p:0,d:0},M:{p:0,d:0},T:{p:0,d:0}},slipped:[],todo:[],tests:[],hit:0},i;
+  var r={a:a,days:[],plan:0,done:0,sub:{P:{p:0,d:0},C:{p:0,d:0},M:{p:0,d:0},T:{p:0,d:0}},slipped:[],todo:[],tests:[],logs:[],hit:0},i;
   for(i=0;i<7;i++){
     var d=addDays(a,i),p=0,dn=0;
     onDay(d).forEach(function(t){
       if(t.kind==='R')return;
-      p+=t.dur;if(t.done)dn+=t.dur;
-      r.sub[t.kind].p+=t.dur;if(t.done)r.sub[t.kind].d+=t.dur;
+      p+=t.dur;dn+=eff(t);
+      r.sub[t.kind].p+=t.dur;r.sub[t.kind].d+=eff(t);
+      if(t.done&&t.log)r.logs.push(t);
       if(t.test)r.tests.push(t);
       if(!t.done&&!t.test){(d<TODAY?r.slipped:r.todo).push(t)}
     });
@@ -955,6 +1049,13 @@ function reviewHTML(){
   var tot3=w.sub.P.d+w.sub.C.d+w.sub.M.d,note='';
   if(low&&w.sub[low].d/w.sub[low].p<0.8&&w.plan&&addDays(a,6)>=TODAY)note='<p class="rvn"><b>'+SUBS[low]+'</b> is the least finished subject ('+Math.round(w.sub[low].d/w.sub[low].p*100)+'% of its plan). Give it the first slot tomorrow.</p>';
   h+='<div class="card"><header><h3>By subject</h3></header>'+(rows?rows:'<p class="empty">Nothing planned this week.</p>')+note+'</div>';
+  if(w.logs.length){
+    var fs=w.logs.filter(function(t){return t.log.f}),avg=fs.length?fs.reduce(function(a,t){return a+t.log.f},0)/fs.length:0;
+    var part=w.logs.filter(function(t){return t.log.p<100}).length,why={};
+    w.logs.forEach(function(t){(t.log.w||[]).forEach(function(x){why[x]=(why[x]||0)+1})});
+    var top=Object.keys(why).sort(function(a,b){return why[b]-why[a]}).slice(0,3).map(function(x){return x+' ×'+why[x]}).join(', ');
+    h+='<div class="card"><header><h3>How sessions went<small>'+w.logs.length+' logged</small></h3></header><p class="rvn" style="margin:0">'+(fs.length?'Average focus <b class="num">'+avg.toFixed(1)+' / 5</b>. ':'')+(part?'<b class="num">'+part+'</b> task'+(part>1?'s were':' was')+' only partly done. ':'All logged tasks were finished. ')+(top?'What got in the way most: '+top+'.':'')+'</p></div>';
+  }
   /* tests */
   h+='<div class="card"><header><h3>Tests this week</h3></header>'+(w.tests.length?'<ul class="lst">'+w.tests.map(function(t){
     var r=t.test.res;
@@ -982,10 +1083,29 @@ function startTimer(id){
   var t=get(id);if(!t||t.done||t.kind==='R')return;
   try{if(!audio&&window.AudioContext)audio=new AudioContext();if(audio&&audio.state==='suspended')audio.resume()}catch(e){}
   try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
-  timer={id:id,title:t.title,total:t.dur*60000,end:Date.now()+t.dur*60000,paused:null,fired:false};
+  var n=new Date(),nowMs=n.getTime(),nm=n.getHours()*60+n.getMinutes()+n.getSeconds()/60,span=t.dur*60000,capped=false,slotEnd=null;
+  if(t.date===TODAY&&t.start!=null){
+    var te=t.start+t.dur;
+    if(nm>=t.start&&nm<te){var rem=(te-nm)*60000;if(rem<span&&rem>=5*60000){span=rem;capped=true;slotEnd=te}}
+    else{var nx=onDay(TODAY).filter(function(x){return x.id!==t.id&&x.start>nm})[0];if(nx){var gp=(nx.start-nm)*60000;if(gp<span&&gp>=5*60000){span=gp;capped=true;slotEnd=nx.start}}}
+  }
+  timer={id:id,title:t.title,total:span,planned:t.dur*60000,end:nowMs+span,paused:null,fired:false,capped:capped,slotEnd:slotEnd};
   saveTimer();renderTimer();
 }
 function stopTimer(){timer=null;saveTimer();renderTimer()}
+function endTimer(mode){
+  if(!timer)return;
+  var id=timer.id,t=get(id),studied=Math.round((timer.total-tmRem())/60000),planned=Math.round(timer.planned/60000);
+  stopTimer();
+  if(!t||t.done)return;
+  var pct=planned?Math.min(100,studied/planned*100):100;
+  if(mode==='done'&&pct>=90){
+    mutate(function(){t.done=true;t.log={p:100,m:studied};t.sample=false},'Marked done. '+studied+' minutes logged.');
+    return;
+  }
+  if(studied<3){toast('Timer stopped. Under 3 minutes, so nothing was logged.');return}
+  openLog(id,{m:studied,p:near25(pct)});
+}
 function beep(){
   try{if(!audio)return;[0,.28,.56].forEach(function(d){var o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(audio.destination);o.start(audio.currentTime+d);o.stop(audio.currentTime+d+.18)})}catch(e){}
   try{if(navigator.vibrate)navigator.vibrate([200,100,200,100,200])}catch(e){}
@@ -1009,8 +1129,9 @@ function renderTimer(){
   if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
   var paused=timer.paused!=null;
   el.hidden=false;
-  el.innerHTML='<div class="tmr'+(timer.fired?' up':'')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div><div class="acts">'+
-    (timer.fired?'<button class="btn sm pri" data-act="timer-done">Mark done</button><button class="btn sm" data-act="timer-add" data-m="10">+10 min</button>':
+  el.innerHTML='<div class="tmr'+(timer.fired?' up':'')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
+    (timer.capped?'<p class="tmn">Ends at '+clock(timer.slotEnd)+' so it does not run into the next task. This session is '+dur(Math.round(timer.total/60000))+' of the '+dur(Math.round(timer.planned/60000))+' planned. Anything unfinished can go to the backlog.</p>':'')+'<div class="acts">'+
+    (timer.fired?'<button class="btn sm pri" data-act="timer-done">'+(timer.capped?'Log it':'Mark done')+'</button><button class="btn sm" data-act="timer-add" data-m="10">+10 min</button>':
       '<button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm" data-act="timer-add" data-m="5">+5 min</button><button class="btn sm pri" data-act="timer-done">Done</button>')+
     '<button class="btn sm" data-act="timer-stop">Stop</button></div></div>';
   tmTick();
@@ -1100,9 +1221,9 @@ function render(){
 
 /* ---------- toast ---------- */
 var toastT=0;
-function toast(msg,undo){
-  ui.undo=undo||null;
-  $('#toast').innerHTML='<div class="toast"><span>'+esc(msg)+'</span>'+(undo?'<button data-act="undo">Undo</button>':'')+'</div>';
+function toast(msg,undo,altLabel,altFn){
+  ui.undo=undo||null;ui.alt=altFn||null;
+  $('#toast').innerHTML='<div class="toast"><span>'+esc(msg)+'</span>'+(undo?'<button data-act="undo">Undo</button>':'')+(altFn?'<button data-act="toast-alt">'+esc(altLabel)+'</button>':'')+'</div>';
   clearTimeout(toastT);toastT=setTimeout(function(){$('#toast').innerHTML='';ui.undo=null},6500);
 }
 
@@ -1136,7 +1257,7 @@ function openTaskForm(o){
     '<label class="f">Start<input type="time" name="start" id="tf-start" step="900" value="'+st+'"'+(isBank?' disabled':'')+'></label>'+
     '<label class="f">Minutes<input type="number" name="dur" id="tf-dur" min="15" max="480" step="15" value="'+v.dur+'"></label></div>'+
     '<div class="quick">'+[30,60,90,120,150,180].map(function(m){return '<button type="button" class="btn sm" data-act="qdur" data-m="'+m+'">'+dur(m)+'</button>'}).join('')+'</div>'+
-    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+(t&&t.date===TODAY&&!t.done&&t.kind!=='R'?'<button type="button" class="btn" data-act="timer-start-form">Start timer</button>':'')+(t&&movable(t)?'<button type="button" class="btn" data-act="to-bank-form">Move to backlog</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+(t&&t.date===TODAY&&!t.done&&t.kind!=='R'?'<button type="button" class="btn" data-act="timer-start-form">Start timer</button>':'')+(t&&t.date&&t.date<=TODAY&&t.kind!=='R'&&!t.test?'<button type="button" class="btn" data-act="log-form">'+(t.done?'Edit log':'Log progress')+'</button>':'')+(t&&movable(t)?'<button type="button" class="btn" data-act="to-bank-form">Move to backlog</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
     t?null:'#tf-title');
 }
 function saveTask(form){
@@ -1230,6 +1351,7 @@ function testPill(d){
   return '<span class="tps">'+shown+(ts.length>2?'<span class="tpill">+'+(ts.length-2)+' more</span>':'')+'</span>';
 }
 function resNote(t){var p=pctOf(t);return p==null?'':' · '+pc(p)}
+function logNote(t){var l=t.done&&t.log;if(!l)return '';return (l.p!=null&&l.p<100?' · '+l.p+'% done':'')+(l.f?' · focus '+l.f+'/5':'')}
 
 /* ---------- tests view ---------- */
 function resultsInScope(all){
@@ -1446,9 +1568,27 @@ function openTestForm(o){
     '<div class="grid2"><label class="f">Maximum marks<input type="number" id="xf-max" name="max" min="1" step="any" value="'+v.max+'"></label>'+
     '<fieldset class="kinds"><legend>Subjects covered</legend>'+subs+'</fieldset></div>'+
     '<label class="f">Syllabus or chapters<input id="xf-syl" name="syl" maxlength="200" placeholder="e.g. Rotational motion, Gravitation" value="'+esc(v.syl)+'"></label>'+
+    (t?'':'<label class="cb"><input type="checkbox" name="ana" checked>Add an analysis block after the test</label>')+
     '<p class="err" hidden></p>'+
-    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-test">Delete</button><button type="button" class="btn" data-act="open-result" data-id="'+t.id+'">'+(tt.res?'Edit result':'Add result')+'</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save test</button></div></form>',
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-test">Delete</button><button type="button" class="btn" data-act="open-result" data-id="'+t.id+'">'+(tt.res?'Edit result':'Add result')+'</button><button type="button" class="btn" data-act="add-analysis" data-id="'+t.id+'">Add analysis block</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save test</button></div></form>',
     t?null:'#xf-name');
+}
+function analysisFor(t){
+  var title='Analyse: '+t.title;
+  if(state.tasks.some(function(x){return x.title===title&&x.date}))return false;
+  var d=t.test&&t.test.k==='chapter'?45:t.test&&t.test.k==='full'?90:60,ex=state.tasks.filter(function(x){return x.title===title&&!x.date})[0];
+  rebuild();
+  var st=findSlot(t.date,d,t.start+t.dur);
+  if(st+d>T1)d=Math.max(15,T1-st);
+  if(ex){ex.date=t.date;ex.start=st;ex.dur=d;ex.from=''}
+  else state.tasks.push({id:uid(),title:title,kind:'T',type:'Analysis',date:t.date,start:st,dur:d,done:false,sample:false,from:''});
+  return true;
+}
+function addAnalysis(id){
+  var t=get(id);if(!t||!t.test)return;
+  var done=false;
+  closeOv();
+  mutate(function(){done=analysisFor(t)},function(){return done?'Analysis block added after “'+t.title+'”':'There is already an analysis block for this test.'});
 }
 function saveTest(form){
   var fd=new FormData(form),id=ui.overlay&&ui.overlay.id,k=String(fd.get('tk')||'full'),D=TEST_KINDS[k];
@@ -1466,8 +1606,12 @@ function saveTest(form){
   mutate(function(){
     var t=id&&get(id);
     if(t){t.title=name;t.type=D.label;t.date=date;t.start=start;t.dur=d;t.sample=false;t.test.k=k;t.test.max=max;t.test.subs=subs;t.test.syl=syl}
-    else state.tasks.push({id:uid(),title:name,kind:'T',type:D.label,date:date,start:start,dur:d,done:false,sample:false,test:{k:k,max:max,subs:subs,syl:syl,res:null}});
-  },id?'Test updated':'Test added to '+shortDate(date));
+    else{
+      var nt={id:uid(),title:name,kind:'T',type:D.label,date:date,start:start,dur:d,done:false,sample:false,test:{k:k,max:max,subs:subs,syl:syl,res:null}};
+      state.tasks.push(nt);
+      if(fd.get('ana')==='on')analysisFor(nt);
+    }
+  },id?'Test updated':'Test added to '+shortDate(date)+(fd.get('ana')==='on'?' with an analysis block':''));
 }
 function openResultForm(id){
   var t=get(id);if(!t||!t.test)return;
@@ -1739,6 +1883,7 @@ function openImport(){
       '<p class="empty">One row per test. Only <b>date</b> is required. Dates can be 2026-11-15, 15/11/2026 or 15 Nov 2026. <b>type</b> is full, part or chapter. <b>start</b> is 09:00 or 4 pm, <b>duration</b> is minutes or hours (180 or 3h). <b>subjects</b> is P, C, M or PCM. To import results as well, add <b>score</b>, <b>physics</b>, <b>chemistry</b>, <b>maths</b>, <b>rank</b> and <b>of</b> (batch size) columns.</p>'+
       '<pre class="ex" id="ex-csv"></pre><div class="acts"><button type="button" class="btn sm" data-act="imp-copy" data-w="csv">Copy CSV example</button><button type="button" class="btn sm" data-act="imp-copy" data-w="json">Copy JSON example</button></div></details>'+
     '<div id="imp-prev" aria-live="polite"></div>'+
+    '<label class="cb"><input type="checkbox" id="imp-ana">Also add an analysis block after each new test</label>'+
     '<div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri" id="imp-go" disabled>Add tests</button></div></form>','#imp-text');
   $('#ex-csv').textContent=IMP_EXAMPLE_CSV;
   renderImportPreview();
@@ -1748,12 +1893,15 @@ function applyImport(){
   var rows=a.rows.filter(function(r){return r.status==='add'||r.status==='upd'});
   if(!rows.length)return;
   var first=rows.filter(function(r){return r.status==='add'}).map(function(r){return r.test.date}).sort()[0];
+  var withAna=!!($('#imp-ana')&&$('#imp-ana').checked);
   closeOv();
   mutate(function(){
     rows.forEach(function(r){
       var t=r.test;
       if(r.status==='add'){
-        state.tasks.push({id:uid(),title:t.name,kind:'T',type:TEST_KINDS[t.k].label,date:t.date,start:t.start,dur:t.dur,done:!!t.res,sample:false,test:{k:t.k,max:t.max,subs:t.subs,syl:t.syl,res:t.res}});
+        var nt={id:uid(),title:t.name,kind:'T',type:TEST_KINDS[t.k].label,date:t.date,start:t.start,dur:t.dur,done:!!t.res,sample:false,test:{k:t.k,max:t.max,subs:t.subs,syl:t.syl,res:t.res}};
+        state.tasks.push(nt);
+        if(withAna&&!t.res)analysisFor(nt);
       }else{
         var ex=get(r.target);if(ex&&ex.test){ex.test.res=t.res;ex.done=true}
       }
@@ -1838,13 +1986,16 @@ document.addEventListener('click',function(e){
     case 'bfilter':ui.bf=el.dataset.v;renderPanel();break;
     case 'missed-bank':toBank(missed().map(function(t){return t.id}),'Moved '+missed().length+' unfinished tasks to the backlog');break;
     case 'missed-hide':ui.hideMissed=true;renderBanner();break;
+    case 'add-analysis':addAnalysis(id);break;
+    case 'log-form':{var lid=ui.overlay&&ui.overlay.id;closeOv();if(lid)openLog(lid);break}
+    case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
     case 'timer-start-form':{var sid=ui.overlay&&ui.overlay.id;closeOv();if(sid)startTimer(sid);break}
     case 'timer-pause':if(timer){timer.paused=tmRem();saveTimer();renderTimer()}break;
     case 'timer-resume':if(timer&&timer.paused!=null){timer.end=Date.now()+timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
     case 'timer-add':if(timer){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
-    case 'timer-done':if(timer){var tid=timer.id;stopTimer();if(get(tid)&&!get(tid).done)toggleDone(tid);toast('Marked done. Nice work.')}break;
-    case 'timer-stop':stopTimer();break;
+    case 'timer-done':endTimer('done');break;
+    case 'timer-stop':endTimer('stop');break;
     case 'review-open':ui.view='review';ui.sel=TODAY;render();break;
     case 'review-hide':ui.hideReview=true;renderBanner();break;
     case 'rv-bank':{var wk=weekData(startOfWeek(ui.sel)).slipped;toBank(wk.map(function(t){return t.id}),'Moved '+wk.length+' unfinished tasks to the backlog');break}
@@ -1856,6 +2007,7 @@ document.addEventListener('click',function(e){
     case 'copy':copyDay(el.dataset.mode);break;
     case 'clear':ui.confirm={type:'clear'};ui.menu=null;renderPanel();break;
     case 'clear-yes':{var dd=ui.sel;ui.confirm=null;mutate(function(){state.tasks=state.tasks.filter(function(t){return t.date!==dd})},'Cleared '+shortDate(dd));break}
+    case 'toast-alt':{var af=ui.alt;ui.alt=null;$('#toast').innerHTML='';if(af)af();break}
     case 'undo':if(ui.undo){ui.undo();ui.undo=null;$('#toast').innerHTML=''}break;
     case 'settings':openSettings();break;
     case 'close-ov':closeOv();break;
@@ -1895,6 +2047,7 @@ document.addEventListener('submit',function(e){
   else if(e.target.id==='rf')saveResult(e.target);
   else if(e.target.id==='imf')applyImport();
   else if(e.target.id==='af')authDo('signin');
+  else if(e.target.id==='lf')saveLog(e.target);
   else if(e.target.id==='qb'){
     var fd=new FormData(e.target),kind=fd.get('kind')||'P',title=String(fd.get('title')||'').trim();
     if(!title)return;
@@ -1904,6 +2057,11 @@ document.addEventListener('submit',function(e){
 });
 document.addEventListener('change',function(e){
   var t=e.target;
+  if(t.closest&&t.closest('#lf')){
+    if(t.id==='lf-rest')t.dataset.touched='1';
+    if(t.name==='p')lfSync($('#lf'));
+    return;
+  }
   if(t.name==='kind'){var s=$('#tf-type');if(s)s.innerHTML=typeOptions(t.value,'')}
   if(t.name==='tk'&&ui.overlay&&ui.overlay.kind==='test'&&!ui.overlay.id){
     var D=TEST_KINDS[t.value],setv=function(q,v){var x=$(q);if(x)x.value=v};
@@ -1919,6 +2077,12 @@ document.addEventListener('change',function(e){
 });
 var impT=0;
 document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='lf-m'){e.target.dataset.auto='0'}
+  if(e.target&&(e.target.id==='lf-qd'||e.target.id==='lf-qp')){
+    var qd=+$('#lf-qd').value,qp=+$('#lf-qp').value;
+    if(qp>0&&$('#lf-qd').value!==''){var r=near25(Math.min(100,qd/qp*100)),ra=document.querySelector('#lf [name=p][value="'+r+'"]');if(ra){ra.checked=true;lfSync($('#lf'))}}
+    return;
+  }
   var t=e.target;
   if(t.id==='rf-tot')t.dataset.manual='1';
   if(t.dataset&&t.dataset.sub){

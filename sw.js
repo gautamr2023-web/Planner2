@@ -1,5 +1,5 @@
 // Offline shell: the app opens without a connection. Supabase calls are never cached.
-const VERSION = 'jee-planner-v3';
+const VERSION = 'jee-planner-v4';
 const SHELL = ['./', 'index.html', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'];
 

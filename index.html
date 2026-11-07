@@ -150,6 +150,21 @@ button{cursor:pointer}
 .cell.out .bub{opacity:.55}
 .cell.sel{outline:2px solid var(--ink);outline-offset:-2px;z-index:1}
 .drop{background:color-mix(in srgb,var(--ink) 10%,var(--surface)) !important}
+.bankz.drop{outline:2px dashed var(--ink);outline-offset:-4px}
+.tb.to-bank{opacity:.7;box-shadow:0 0 0 2px var(--ink)}
+.banner.miss{border-style:solid;border-color:var(--over)}
+.mvb{width:26px;height:26px;flex:none;border-radius:6px;border:1px solid transparent;background:none;padding:0;display:inline-grid;place-items:center;color:inherit;opacity:.7}
+.mvb:hover{opacity:1;background:color-mix(in srgb,var(--ink) 8%,transparent);border-color:var(--line-strong)}
+.mvb svg{width:15px;height:15px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.fchip{border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.fchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.qb{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:6px}
+.qb select,.qb input{height:32px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);color:var(--ink);padding:0 8px;font:inherit;font-size:13px;min-width:0}
+.bbtns{display:flex;flex-direction:column;gap:4px;flex:none}
+.miss-tag{font-weight:700;color:var(--over)}
+.k-T .miss-tag{color:inherit;text-decoration:underline}
+@media (max-width:640px){.qb{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.qb input{grid-column:1/-1;order:3}.qb .btn{order:4;grid-column:1/-1}}
 .cell .bub{grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
 .cell .bub i{border-width:1px}
 .ct{display:flex;justify-content:space-between;align-items:center;gap:4px}
@@ -440,9 +455,9 @@ var tplStudy=function(k){return TEMPLATES[k].items.reduce(function(a,i){return a
 var LS='jee-planner-v1';
 var state={v:1,updated:0,settings:Object.assign({},DEFAULTS),tasks:[]};
 var idx=new Map();
-var ui={view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
-var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0]};
-var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null}};
+var ui={bf:'all',hideMissed:false,view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
+var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'']};
+var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:''}};
 var fixTest=function(t){
   var x=t.test;
   if(x&&(!x.k||!(x.max>0)||typeof x.subs!=='string'||!x.subs))t.test=null;
@@ -624,6 +639,49 @@ function mutate(fn,msg){
   if(m)toast(m,function(){state.tasks=JSON.parse(snap);rebuild();persist();render()});
 }
 function toggleDone(id){var t=get(id);if(!t)return;t.done=!t.done;rebuild();persist();render()}
+
+/* backlog: send unfinished work to the bank, and place it back automatically */
+var movable=function(t){return t&&t.date&&!t.test&&t.kind!=='R'&&!t.done};
+function toBank(ids,msg){
+  var ts=ids.map(get).filter(movable);
+  if(!ts.length){toast(ids.length===1&&get(ids[0])&&get(ids[0]).test?'Tests keep their date. Use Edit test to change it.':ids.length===1&&get(ids[0])&&get(ids[0]).done?'That task is already done.':'Nothing to move.');return}
+  mutate(function(){ts.forEach(function(t){t.from=t.date;t.date='';t.start=null;t.done=false;t.sample=false})},
+    msg||('Moved “'+ts[0].title+'” to the bank'));
+}
+var missed=function(){return state.tasks.filter(function(t){return t.date&&t.date<TODAY&&movable(t)&&!t.sample})};
+function planSlot(t){
+  return planSlotCap(t,state.settings.min*60)||planSlotCap(t,state.settings.max*60);
+}
+function planSlotCap(t,max){
+  for(var i=0;i<45;i++){
+    var d=addDays(TODAY,i),from=360;
+    if(d===TODAY){var n=new Date();from=Math.max(360,Math.ceil((n.getHours()*60+n.getMinutes())/15)*15)}
+    if(dayStats(d).study+t.dur>max)continue;
+    var st=findSlot(d,t.dur,from,t.id);
+    if(st<from||st+t.dur>1380)continue;
+    if(onDay(d).some(function(x){return x.id!==t.id&&x.start<st+t.dur&&x.start+x.dur>st}))continue;
+    return {date:d,start:st};
+  }
+  return null;
+}
+function autoPlace(id){
+  var t=get(id);if(!t)return;
+  var p=planSlot(t);
+  if(!p){toast('No free slot in the next 6 weeks. Raise the daily maximum in settings or shorten the task.');return}
+  ui.sel=p.date;
+  mutate(function(){t.date=p.date;t.start=p.start;t.from='';t.sample=false},'Scheduled “'+t.title+'” on '+shortDate(p.date)+' at '+clock(p.start));
+}
+function autoFill(){
+  var list=bank().slice().sort(function(a,b){return (a.from||'9')<(b.from||'9')?-1:(a.from||'9')>(b.from||'9')?1:0}),ok=0,first=null;
+  if(!list.length)return;
+  mutate(function(){
+    list.forEach(function(t){
+      var p=planSlot(t);if(!p)return;
+      t.date=p.date;t.start=p.start;t.from='';t.sample=false;rebuild();ok++;if(!first||p.date<first)first=p.date;
+    });
+  },function(){return ok?'Scheduled '+ok+' of '+list.length+' backlog item'+(list.length>1?'s':'')+' into free slots'+(ok<list.length?'. The rest did not fit.':''):'Nothing fit in the next 6 weeks.'});
+  if(first)ui.sel=first,render();
+}
 function moveTask(id,date,minute){
   var t=get(id);if(!t)return;
   var was=t.date;
@@ -633,7 +691,7 @@ function moveTask(id,date,minute){
     t.date=date;
     if(minute!=null)t.start=minute;
     else if(t.start==null||!was)t.start=findSlot(date,t.dur,360,t.id);
-    t.sample=false;
+    t.sample=false;t.from='';
   },'Moved “'+t.title+'” to '+shortDate(date));
 }
 function applyTemplate(key){
@@ -698,9 +756,11 @@ function renderTop(){
    '<button class="ib" data-act="settings" aria-label="Settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg></button>';
 }
 function renderBanner(){
-  var el=$('#banner'),has=state.tasks.some(function(t){return t.sample});
-  el.hidden=!has;
-  if(has)el.innerHTML='<div class="banner"><span>A sample plan is loaded so you can see how the planner works. Your own tasks will sit next to it.</span><button class="btn sm" data-act="clear-samples">Clear samples</button><button class="btn sm" data-act="keep-samples">Keep and edit</button></div>';
+  var el=$('#banner'),has=state.tasks.some(function(t){return t.sample}),ms=ui.hideMissed?[]:missed(),h='';
+  if(ms.length){var mm=ms.reduce(function(a,t){return a+t.dur},0);
+    h+='<div class="banner miss"><span><b>'+ms.length+' unfinished task'+(ms.length>1?'s':'')+'</b> from earlier days ('+hh(mm)+'). Move them to the backlog, then place them in free slots.</span><button class="btn sm pri" data-act="missed-bank">Move to backlog</button><button class="btn sm" data-act="missed-hide">Hide</button></div>'}
+  if(has)h+='<div class="banner"><span>A sample plan is loaded so you can see how the planner works. Your own tasks will sit next to it.</span><button class="btn sm" data-act="clear-samples">Clear samples</button><button class="btn sm" data-act="keep-samples">Keep and edit</button></div>';
+  el.hidden=!h;el.innerHTML=h;
 }
 function periodLabel(){
   var x=parse(ui.sel);
@@ -760,8 +820,10 @@ function cardHTML(t,cls){
   return '<div class="blk '+cls+' k-'+t.kind+(t.done?' done':'')+'" data-drag="'+t.id+'" draggable="true">'+
     '<span class="chip">'+(t.kind==='R'?'R':t.kind)+'</span>'+
     '<button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+(t.date?range(t.start,t.start+t.dur)+' · ':'')+dur(t.dur)+' · '+esc(t.type)+resNote(t)+'</small></button>'+
+    (cls==='row'&&movable(t)?'<button class="mvb" data-act="to-bank" data-id="'+t.id+'" aria-label="Move “'+esc(t.title)+'” to the bank" title="Move to the bank">'+TRAY+'</button>':'')+
     chkHTML(t)+'</div>';
 }
+var TRAY='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.5h3.2l.9 1.8h3.8l.9-1.8H14M2 9.5l1.6-5.8h8.8L14 9.5V13H2z"/></svg>';
 var CHECK='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
 function chkHTML(t){return '<button class="chk'+(t.done?' on':'')+'" data-act="toggle" data-id="'+t.id+'" aria-pressed="'+t.done+'" aria-label="Mark “'+esc(t.title)+'” done">'+CHECK+'</button>'}
 function weekHTML(){
@@ -861,10 +923,20 @@ function renderPanel(){
     h+='<div class="ps"><p class="hint" style="margin:0">Click an empty slot to add a task at that time. Drag a block to move it, drag its bottom edge to resize, and tick the circle when it is done.</p></div>';
   }
   /* bank */
-  h+='<div class="ps"><h4>Task bank · '+bk.length+'</h4>'+(bk.length?'<ul class="lst">'+bk.map(function(t){
-    return '<li><div class="blk row k-'+t.kind+'" data-drag="'+t.id+'" draggable="true"><span class="chip">'+t.kind+'</span><button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+dur(t.dur)+' · '+esc(t.type)+'</small></button><button class="btn sm" data-act="assign" data-id="'+t.id+'" aria-label="Assign to '+shortDate(d)+'">Add to '+DAYS[dow(d)]+' '+parse(d).getDate()+'</button></div></li>';
-  }).join('')+'</ul>':'<p class="empty">Keep tasks here until you know which day they belong to, then drag them onto a day or use the button.</p>')+
-  '<div class="acts" style="margin-top:10px"><button class="btn sm" data-act="add-bank">+ Add to bank</button></div></div>';
+  var bf=ui.bf,fl=bk.filter(function(t){return bf==='all'||(bf==='missed'?!!t.from:t.kind===bf)});
+  fl.sort(function(x,y){var a=x.from||'9',b=y.from||'9';return a<b?-1:a>b?1:0});
+  var nm=bk.filter(function(t){return t.from}).length;
+  var chips=[['all','All'],['missed','Carried over'+(nm?' '+nm:'')],['P','Physics'],['C','Chemistry'],['M','Maths'],['T','Tests']].map(function(c){return '<button type="button" class="fchip" data-act="bfilter" data-v="'+c[0]+'" aria-pressed="'+(bf===c[0])+'">'+c[1]+'</button>'}).join('');
+  h+='<div class="ps bankz" id="bankz" data-drop="bank"><h4>Backlog and task bank · '+bk.length+'</h4>'+
+    '<p class="hint" style="margin:0 0 8px">Drag unfinished blocks here, or use the tray button on a task. Drag a bank item onto a day, or let the planner find a free slot.</p>'+
+    (bk.length?'<div class="fchips" role="group" aria-label="Filter the bank">'+chips+'</div>':'')+
+    '<form class="qb" id="qb"><select name="kind" aria-label="Subject"><option value="P">Physics</option><option value="C">Chemistry</option><option value="M">Maths</option><option value="T">Test</option></select>'+
+    '<input name="title" maxlength="80" required placeholder="Add a backlog item" aria-label="New bank item"><select name="dur" aria-label="Minutes"><option value="30">30m</option><option value="60" selected>1h</option><option value="90">1h 30m</option><option value="120">2h</option><option value="180">3h</option></select><button class="btn sm pri" type="submit">Add</button></form>'+
+    (fl.length?'<ul class="lst" style="margin-top:8px">'+fl.map(function(t){
+      return '<li><div class="blk row k-'+t.kind+'" data-drag="'+t.id+'" draggable="true"><span class="chip">'+t.kind+'</span><button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+dur(t.dur)+' · '+esc(t.type)+(t.from?' · <span class="miss-tag">from '+shortDate(t.from)+'</span>':'')+'</small></button>'+
+        '<span class="bbtns"><button class="btn sm" data-act="assign" data-id="'+t.id+'" aria-label="Add to '+shortDate(d)+'">Add to '+DAYS[dow(d)]+' '+parse(d).getDate()+'</button><button class="btn sm" data-act="autoplace" data-id="'+t.id+'" title="Put it in the next free slot">Next free slot</button></span></div></li>';
+    }).join('')+'</ul>':'<p class="empty">'+(bk.length?'Nothing in this filter.':'Park backlogs and tests to attempt here until you know which day they belong to.')+'</p>')+
+    '<div class="acts" style="margin-top:10px">'+(bk.length?'<button class="btn sm pri" data-act="autofill">Schedule all in free slots</button>':'')+'<button class="btn sm" data-act="add-bank">+ Add with details</button></div></div>';
   $('#panel').innerHTML=h;
 }
 function render(){
@@ -913,7 +985,7 @@ function openTaskForm(o){
     '<label class="f">Start<input type="time" name="start" id="tf-start" step="900" value="'+st+'"'+(isBank?' disabled':'')+'></label>'+
     '<label class="f">Minutes<input type="number" name="dur" id="tf-dur" min="15" max="480" step="15" value="'+v.dur+'"></label></div>'+
     '<div class="quick">'+[30,60,90,120,150,180].map(function(m){return '<button type="button" class="btn sm" data-act="qdur" data-m="'+m+'">'+dur(m)+'</button>'}).join('')+'</div>'+
-    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+(t&&movable(t)?'<button type="button" class="btn" data-act="to-bank-form">Move to backlog</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
     t?null:'#tf-title');
 }
 function saveTask(form){
@@ -930,7 +1002,7 @@ function saveTask(form){
   if(date)ui.sel=date;
   closeOv();
   mutate(function(){
-    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false})}
+    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false,from:date?'':get(id).from||''})}
     else state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:start,dur:d,done:false,sample:false});
   },id?'Task updated':'Task added'+(date?' to '+shortDate(date):' to the bank'));
 }
@@ -1590,6 +1662,13 @@ document.addEventListener('click',function(e){
     case 'edit':{var et=get(id);if(et&&et.test)openTestForm({id:id});else openTaskForm({id:id});break}
     case 'toggle':toggleDone(id);break;
     case 'assign':moveTask(id,ui.sel);break;
+    case 'to-bank':toBank([id]);break;
+    case 'to-bank-form':{var bid=ui.overlay&&ui.overlay.id;closeOv();if(bid)toBank([bid]);break}
+    case 'autoplace':autoPlace(id);break;
+    case 'autofill':autoFill();break;
+    case 'bfilter':ui.bf=el.dataset.v;renderPanel();break;
+    case 'missed-bank':toBank(missed().map(function(t){return t.id}),'Moved '+missed().length+' unfinished tasks to the backlog');break;
+    case 'missed-hide':ui.hideMissed=true;renderBanner();break;
     case 'menu':ui.menu=ui.menu===el.dataset.m?null:el.dataset.m;ui.confirm=null;renderPanel();break;
     case 'menu-close':ui.menu=ui.confirm=null;renderPanel();break;
     case 'tpl':if(onDay(ui.sel).length){ui.confirm={type:'tpl',key:el.dataset.key};ui.menu=null;renderPanel()}else applyTemplate(el.dataset.key);break;
@@ -1636,6 +1715,12 @@ document.addEventListener('submit',function(e){
   else if(e.target.id==='rf')saveResult(e.target);
   else if(e.target.id==='imf')applyImport();
   else if(e.target.id==='af')authDo('signin');
+  else if(e.target.id==='qb'){
+    var fd=new FormData(e.target),kind=fd.get('kind')||'P',title=String(fd.get('title')||'').trim();
+    if(!title)return;
+    mutate(function(){state.tasks.push({id:uid(),title:title,kind:kind,type:TYPES[kind][0],date:'',start:null,dur:+fd.get('dur')||60,done:false,sample:false,from:''})},'Added to the bank');
+    var q=$('#qb input[name=title]');if(q)q.focus();
+  }
 });
 document.addEventListener('change',function(e){
   var t=e.target;
@@ -1687,6 +1772,7 @@ document.addEventListener('drop',function(e){
   var z=e.target.closest&&e.target.closest('[data-drop]');if(!z)return;
   e.preventDefault();z.classList.remove('drop');
   var id=e.dataTransfer.getData('text/plain');if(!get(id))return;
+  if(z.dataset.drop==='bank'){toBank([id]);return}
   var m=null;
   if(z.dataset.tl){var r=z.getBoundingClientRect();m=clamp(Math.round(((e.clientY-r.top)/HP*60+T0)/15)*15,T0,T1-15)}
   moveTask(id,z.dataset.drop,m);
@@ -1716,6 +1802,13 @@ document.addEventListener('pointermove',function(e){
     drag.blk.classList.add('dragging-now');
   }
   var dm=Math.round(dy/HP*4)*15;
+  if(drag.mode==='mv'){
+    var under=document.elementFromPoint(e.clientX,e.clientY),bz=under&&under.closest&&under.closest('[data-drop="bank"]');
+    var bzEl=document.getElementById('bankz');
+    drag.bank=!!bz&&movable(drag.t);
+    if(bzEl)bzEl.classList.toggle('drop',drag.bank);
+    drag.blk.classList.toggle('to-bank',drag.bank);
+  }
   if(drag.mode==='mv'){drag.ns=clamp(drag.s0+dm,T0,T1-drag.d0);drag.blk.style.top=((drag.ns-T0)/60*HP)+'px'}
   else{drag.nd=clamp(drag.d0+dm,15,T1-drag.s0);drag.blk.style.height=Math.max(12,drag.nd/60*HP-2)+'px'}
   var sm=drag.blk.querySelector('small');
@@ -1727,6 +1820,8 @@ function endDrag(e,cancel){
   var d=drag;drag=null;
   if(!d.moved)return;
   ui.suppress=true;setTimeout(function(){ui.suppress=false},50);
+  var bzEl=document.getElementById('bankz');if(bzEl)bzEl.classList.remove('drop');
+  if(!cancel&&d.bank){toBank([d.t.id]);return}
   if(cancel||(d.ns===d.s0&&d.nd===d.d0)){render();return}
   mutate(function(){d.t.start=d.ns;d.t.dur=d.nd;d.t.sample=false},d.mode==='mv'?'Moved to '+clock(d.ns):'Duration set to '+dur(d.nd));
 }

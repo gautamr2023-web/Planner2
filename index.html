@@ -500,23 +500,25 @@ var tplStudy=function(k){return TEMPLATES[k].items.reduce(function(a,i){return a
 
 /* state */
 var LS='jee-planner-v1';
-var state={v:1,updated:0,settings:Object.assign({},DEFAULTS),tasks:[]};
+var state={v:1,updated:0,su:0,del:{},settings:Object.assign({},DEFAULTS),tasks:[]};
 var idx=new Map();
 var ui={bf:'all',hideMissed:false,hideReview:false,view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
-var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'',t.log||0]};
-var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:'',log:a[11]&&typeof a[11]==='object'?a[11]:null}};
+var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'',t.log||0,t.u||0]};
+var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:'',log:a[11]&&typeof a[11]==='object'?a[11]:null,u:+a[12]||0}};
 var fixTest=function(t){
   var x=t.test;
   if(x&&(!x.k||!(x.max>0)||typeof x.subs!=='string'||!x.subs))t.test=null;
   else if(x){x.syl=x.syl||'';x.res=x.res||null}
   return t;
 };
-var serialize=function(){return {v:1,updated:state.updated||0,settings:state.settings,tasks:state.tasks.map(pack)}};
+var serialize=function(){return {v:1,updated:state.updated||0,su:state.su||0,del:state.del||{},settings:state.settings,tasks:state.tasks.map(pack)}};
 function hydrate(o){
   if(!o||o.v!==1||!Array.isArray(o.tasks)) return null;
   var s=Object.assign({},DEFAULTS,o.settings||{});
   var tasks=o.tasks.map(unpack).map(fixTest).filter(function(t){return SUBS[t.kind]&&t.dur>0&&t.id});
-  return {v:1,updated:+o.updated||0,settings:s,tasks:tasks};
+  tasks.forEach(function(t){if(!t.u)t.u=+o.updated||0});
+  var dl={};if(o.del&&typeof o.del==='object')Object.keys(o.del).forEach(function(k){if(+o.del[k]>0)dl[k]=+o.del[k]});
+  return {v:1,updated:+o.updated||0,su:+o.su||+o.updated||0,del:dl,settings:s,tasks:tasks};
 }
 function rebuild(){
   idx=new Map();
@@ -571,7 +573,7 @@ function saveHTML(){var c=saveState==='synced'||saveState==='ready'?' ok':saveSt
   return '<span class="save'+c+'" id="save"><i></i>'+SAVE_TXT[saveState]+'</span>'}
 function setSave(s){saveState=s;var el=$('#save');if(el)el.outerHTML=saveHTML()}
 function persist(){
-  state.updated=Date.now();
+  state.updated=Date.now();stamp();
   try{localStorage.setItem(LS,JSON.stringify(serialize()))}catch(e){}
   dirty=true;clearTimeout(saveT);saveT=setTimeout(flush,800);
   setSave(dbDoc?'saving':'local');
@@ -592,9 +594,65 @@ function flush(){
     if(dirty)saveT=setTimeout(flush,failed?20000:400);
   });
 }
+/* per-task sync: every task carries the time it last changed (u), deletions are remembered (del),
+   so two devices that edited different things both keep their edits when they meet */
+var SNAP=new Map(),SMP=new Set(),SETSIG='';
+function canon(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(Array.isArray(v))return '['+v.map(canon).join(',')+']';
+  return '{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+canon(v[k])}).join(',')+'}';
+}
+var sig=function(t){return canon(pack(t).slice(0,12))};
+function resnap(){SNAP=new Map();SMP=new Set();state.tasks.forEach(function(t){SNAP.set(t.id,sig(t));if(t.sample)SMP.add(t.id)});SETSIG=canon(state.settings);if(!state.del)state.del={}}
+function stamp(){
+  var now=Date.now(),seen={},k;
+  if(!state.del)state.del={};
+  state.tasks.forEach(function(t){seen[t.id]=1;var g=sig(t);if(SNAP.get(t.id)!==g){t.u=now;SNAP.set(t.id,g)}if(t.sample)SMP.add(t.id);else SMP.delete(t.id)});
+  SNAP.forEach(function(g,id){if(!seen[id]){if(!SMP.has(id))state.del[id]=now;SNAP.delete(id);SMP.delete(id)}});
+  state.tasks.forEach(function(t){if(state.del[t.id]&&state.del[t.id]<=t.u)delete state.del[t.id]});
+  for(k in state.del)if(now-state.del[k]>90*864e5)delete state.del[k];
+  var ss=canon(state.settings);if(ss!==SETSIG){SETSIG=ss;state.su=now}
+}
+function stSig(x){return canon({s:x.settings,su:x.su||0,d:x.del||{},t:x.tasks.slice().sort(function(a,b){return a.id<b.id?-1:a.id>b.id?1:0}).map(pack)})}
+function mergeStates(loc,rem){
+  var ls=stSig(loc),rs=stSig(rem),del={},k;
+  [rem.del||{},loc.del||{}].forEach(function(o){for(k in o)if(!(del[k]>=o[k]))del[k]=o[k]});
+  var by={};
+  function put(t,from){
+    var c=by[t.id];if(!c){by[t.id]={t:t,from:from};return}
+    var a=t.u||0,b=c.t.u||0;
+    if(a>b||(a===b&&from==='r'&&rem.updated>loc.updated))by[t.id]={t:t,from:from};
+  }
+  loc.tasks.forEach(function(t){put(t,'l')});rem.tasks.forEach(function(t){put(t,'r')});
+  var tasks=[];
+  Object.keys(by).forEach(function(id){
+    var t=by[id].t;
+    if(del[id]&&del[id]>=(t.u||0))return;
+    delete del[id];tasks.push(t);
+  });
+  var now=Date.now();for(k in del)if(now-del[k]>90*864e5)delete del[k];
+  var useRem=(rem.su||0)>(loc.su||0)||((rem.su||0)===(loc.su||0)&&rem.updated>loc.updated);
+  var m={v:1,updated:Math.max(loc.updated||0,rem.updated||0),su:Math.max(loc.su||0,rem.su||0),del:del,settings:Object.assign({},useRem?rem.settings:loc.settings),tasks:tasks};
+  var ms=stSig(m);
+  return {state:m,local:ms!==ls,remote:ms!==rs};
+}
+function syncRemote(remote,first){
+  if(first){
+    if(!remote){
+      if(dirty||hadLocal){if(!state.updated)state.updated=Date.now();dirty=true;flush()}else setSave('ready');
+      return;
+    }
+    if(!hadLocal&&!dirty){adopt(remote);setSave('synced');return}
+  }
+  if(!remote)return;
+  var m=mergeStates(state,remote);
+  if(m.local){state=m.state;rebuild();resnap();try{localStorage.setItem(LS,JSON.stringify(serialize()))}catch(e){}render()}
+  if(m.remote){dirty=true;flush()}
+  else if(!dirty&&!busy)setSave('synced');
+}
 function readLS(){try{var s=localStorage.getItem(LS);return s?JSON.parse(s):null}catch(e){return null}}
 function adopt(remote){
-  state=remote;rebuild();
+  state=remote;rebuild();resnap();
   try{localStorage.setItem(LS,JSON.stringify(serialize()))}catch(e){}
   render();
 }
@@ -635,15 +693,9 @@ function startSync(uid){
   unsub=ref.onSnapshot(function(snap){
     var remote=null;
     if(snap.exists){try{remote=hydrate(JSON.parse((snap.data()||{}).planJson))}catch(x){remote=null}}
-    if(first){
-      first=false;dbDoc=ref;
-      if(remote&&!dirty&&(remote.updated>=state.updated||!hadLocal)){adopt(remote);setSave('synced')}
-      else if(dirty||hadLocal){if(!state.updated)state.updated=Date.now();dirty=true;flush()}
-      else setSave('ready');
-      return;
-    }
-    if(remote&&remote.updated>state.updated&&!dirty&&!busy){adopt(remote);setSave('synced')}
-    else if(saveState==='error'&&!dirty)setSave('synced');
+    var f=first;first=false;if(f)dbDoc=ref;
+    syncRemote(remote,f);
+    if(!f&&saveState==='error'&&!dirty)setSave('synced');
   },function(){setSave('error')});
 }
 function stopSync(){if(unsub){unsub();unsub=null}dbDoc=null}
@@ -769,17 +821,22 @@ function moveTask(id,date,minute){
   },'Moved “'+t.title+'” to '+shortDate(date));
 }
 function applyTemplate(key){
-  var tp=TEMPLATES[key],d=ui.sel;
+  var tp=TEMPLATES[key],d=ui.sel,skipped=0;
   ui.menu=null;ui.confirm=null;
   mutate(function(){
-    state.tasks=state.tasks.filter(function(t){return t.date!==d});
-    tp.items.forEach(function(i){state.tasks.push({id:uid(),title:i[4],kind:i[2],type:i[3],date:d,start:i[0],dur:i[1],done:false,sample:false,test:i[5]?cloneTest(i[5]):null})});
-  },tp.name+' added to '+shortDate(d));
+    state.tasks=state.tasks.filter(function(t){return t.date!==d||t.done||t.test});
+    rebuild();
+    tp.items.forEach(function(i){
+      var st=i[0],clash=function(q){return onDay(d).some(function(x){return x.start!=null&&x.start<q+i[1]&&x.start+x.dur>q})};
+      if(clash(st)){if(i[2]==='R'){skipped++;return}st=findSlot(d,i[1],i[0],null);if(clash(st)||st+i[1]>T1){skipped++;return}}
+      state.tasks.push({id:uid(),title:i[4],kind:i[2],type:i[3],date:d,start:st,dur:i[1],done:false,sample:false,test:i[5]?cloneTest(i[5]):null});rebuild();
+    });
+  },function(){return tp.name+' added to '+shortDate(d)+(skipped?'. '+skipped+' block'+(skipped>1?'s':'')+' skipped because they clashed with a finished task or test.':'')});
 }
 function copyDay(mode){
-  var src=onDay(ui.sel).slice(),targets=[],i;
+  var src=onDay(ui.sel).filter(function(t){return !t.test}),targets=[],i;
   ui.menu=null;
-  if(!src.length){toast('This day has no tasks to copy.');render();return}
+  if(!src.length){toast('Nothing to copy. Tests are not copied.');render();return}
   if(mode==='next')targets=[addDays(ui.sel,1)];
   if(mode==='week'){var end=addDays(startOfWeek(ui.sel),6);for(var d=addDays(ui.sel,1);d<=end;d=addDays(d,1))targets.push(d)}
   if(mode==='7')for(i=1;i<=7;i++)targets.push(addDays(ui.sel,i));
@@ -1226,7 +1283,7 @@ function renderPanel(){
   /* actions */
   var menuHTML='';
   if(ui.confirm&&ui.confirm.type==='tpl'){
-    menuHTML='<div class="menu"><p>This replaces the '+list.length+' task'+(list.length>1?'s':'')+' on '+shortDate(d)+' with the '+TEMPLATES[ui.confirm.key].name.toLowerCase()+'.</p><div class="acts"><button class="btn sm pri" data-act="tpl-yes">Replace day</button><button class="btn sm" data-act="menu-close">Cancel</button></div></div>';
+    menuHTML='<div class="menu"><p>This replaces the '+list.filter(function(x){return !x.done&&!x.test}).length+' unfinished task'+(list.filter(function(x){return !x.done&&!x.test}).length===1?'':'s')+' on '+shortDate(d)+' with the '+TEMPLATES[ui.confirm.key].name.toLowerCase()+'. Finished tasks and tests stay.</p><div class="acts"><button class="btn sm pri" data-act="tpl-yes">Replace day</button><button class="btn sm" data-act="menu-close">Cancel</button></div></div>';
   }else if(ui.confirm&&ui.confirm.type==='clear'){
     menuHTML='<div class="menu"><p>Remove all '+list.length+' task'+(list.length>1?'s':'')+' from '+shortDate(d)+'?</p><div class="acts"><button class="btn sm danger" data-act="clear-yes">Clear day</button><button class="btn sm" data-act="menu-close">Cancel</button></div></div>';
   }else if(ui.menu==='tpl'){
@@ -1306,9 +1363,9 @@ function openTaskForm(o){
     '<label class="cb"><input type="checkbox" name="bank" id="tf-bank"'+(isBank?' checked':'')+'>Keep in the task bank (no day yet)</label>'+
     '<div class="grid3"><label class="f">Day<input type="date" name="date" id="tf-date" value="'+(v.date||ui.sel)+'"'+(isBank?' disabled':'')+'></label>'+
     '<label class="f">Start<input type="time" name="start" id="tf-start" step="900" value="'+st+'"'+(isBank?' disabled':'')+'></label>'+
-    '<label class="f">Minutes<input type="number" name="dur" id="tf-dur" min="15" max="480" step="15" value="'+v.dur+'"></label></div>'+
+    '<label class="f">Minutes<input type="number" name="dur" id="tf-dur" min="5" max="480" step="5" value="'+v.dur+'"></label></div>'+
     '<div class="quick">'+[30,60,90,120,150,180].map(function(m){return '<button type="button" class="btn sm" data-act="qdur" data-m="'+m+'">'+dur(m)+'</button>'}).join('')+'</div>'+
-    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+(t&&t.date===TODAY&&!t.done&&t.kind!=='R'?'<button type="button" class="btn" data-act="timer-start-form">Start timer</button>':'')+(t&&t.date&&t.date<=TODAY&&t.kind!=='R'&&!t.test?'<button type="button" class="btn" data-act="log-form">'+(t.done?'Edit log':'Log progress')+'</button>':'')+(t&&movable(t)?'<button type="button" class="btn" data-act="to-bank-form">Move to backlog</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
+    '<div class="actions">'+(t?'<button type="button" class="btn danger" data-act="del-task">Delete</button>':'')+(t&&t.date===TODAY&&!t.done&&t.kind!=='R'?'<button type="button" class="btn" data-act="timer-start-form">Start timer</button>':'')+(t&&t.date&&t.date<=TODAY&&t.kind!=='R'&&!t.test?'<button type="button" class="btn" data-act="log-form">'+(t.done?'Edit log':'Log progress')+'</button>':'')+(t&&movable(t)?'<button type="button" class="btn" data-act="to-bank-form">Move to backlog</button>':'')+(t&&t.date&&!t.test&&'PCM'.indexOf(t.kind)>=0&&t.type!=='Revision'?'<button type="button" class="btn" data-act="plan-rev">Plan revisions</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save task</button></div></form>',
     t?null:'#tf-title');
 }
 function saveTask(form){
@@ -1316,7 +1373,7 @@ function saveTask(form){
   var kind=fd.get('kind')||'P',type=fd.get('type')||TYPES[kind][0];
   var title=String(fd.get('title')||'').trim()||(SUBS[kind]+' '+type);
   var bankOnly=fd.get('bank')==='on',date=bankOnly?'':String(fd.get('date')||'');
-  var d=clamp(Math.round((+fd.get('dur')||60)/15)*15,15,480),start=null;
+  var d=clamp(Math.round((+fd.get('dur')||60)/5)*5,5,480),start=null;
   if(date){
     var tv=String(fd.get('start')||'');
     if(tv){var p=tv.split(':').map(Number);start=clamp(p[0]*60+p[1],T0,T1-15)}else start=findSlot(date,d,360,id);
@@ -1325,9 +1382,21 @@ function saveTask(form){
   if(date)ui.sel=date;
   closeOv();
   mutate(function(){
-    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false,from:date?'':get(id).from||''})}
+    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false,from:date?'':get(id).from||''});if(!date){get(id).done=false;get(id).log=null}}
     else state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:start,dur:d,done:false,sample:false});
   },id?'Task updated':'Task added'+(date?' to '+shortDate(date):' to the bank'));
+}
+function planRevisions(id){
+  var t=get(id);if(!t||!t.date)return;
+  var base=t.title.replace(/^Revise: /,''),title='Revise: '+base,made=[];
+  mutate(function(){
+    [1,7,30].forEach(function(n){
+      var d=addDays(t.date,n);
+      if(onDay(d).some(function(x){return x.title===title}))return;
+      var st=findSlot(d,30,1020,null);
+      state.tasks.push({id:uid(),title:title,kind:t.kind,type:'Revision',date:d,start:st,dur:30,done:false,sample:false});rebuild();made.push(n);
+    });
+  },function(){return made.length?'Added 30-minute revisions after '+made.join(', ')+' days':'Revisions are already planned.'});
 }
 function openSettings(){
   var S=state.settings;ui.overlay={kind:'settings'};
@@ -2043,6 +2112,7 @@ document.addEventListener('click',function(e){
     case 'early-part':{var pid=ui.overlay&&ui.overlay.id;closeOv();ui.early=null;if(pid)openLog(pid);break}
     case 'lapsed-bank':{var ids=lapsed().map(function(t){return t.id});toBank(ids,'Moved '+ids.length+' task'+(ids.length>1?'s':'')+' to the backlog');break}
     case 'lapsed-hide':ui.hideLapsed=true;renderBanner();break;
+    case 'plan-rev':{var rid=ui.overlay&&ui.overlay.id;closeOv();if(rid)planRevisions(rid);break}
     case 'log-form':{var lid=ui.overlay&&ui.overlay.id;closeOv();if(lid)openLog(lid);break}
     case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){if(ut.log&&ut.log.e&&ut.log.s!=null){ut.dur=ut.log.e;ut.start=ut.log.s}ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
@@ -2246,7 +2316,7 @@ window.addEventListener('focus',dayTick);
   var local=hydrate(readLS());
   if(local){state=local;hadLocal=true}
   else state.tasks=seedSamples();
-  rebuild();render();
+  rebuild();resnap();render();
   loadTimer();renderTimer();
   connect();
 })();

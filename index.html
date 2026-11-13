@@ -317,6 +317,7 @@ body.has-timer{padding-bottom:130px}
 @media (max-width:480px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kinds{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:0;min-width:0}
 .kinds legend{font-size:12px;font-weight:600;color:var(--ink-2);padding:0;margin-bottom:6px}
+.opts{display:grid;gap:8px}.opts .btn{text-align:left;white-space:normal}
 .kopt{position:relative}
 .kopt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
 .kb{display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:999px;padding:4px 12px 4px 5px;font-weight:600;font-size:13px;color:var(--ink)}
@@ -702,9 +703,12 @@ function mutate(fn,msg){
 }
 function toggleDone(id){
   var t=get(id);if(!t)return;
-  var now=!t.done;
-  mutate(function(){t.done=now;t.log=null},now?null:null);
+  var now=!t.done,studied=null;
+  if(now&&timer&&timer.id===id){studied=Math.round((timer.total-tmRem())/60000);stopTimer()}
+  var info=now?earlyInfo(t,studied):null;
+  mutate(function(){t.done=now;t.log=null},null);
   if(now&&t.kind!=='R'&&!t.test){
+    if(info){openEarly(id,info);return}
     var u=function(){t.done=false;t.log=null;rebuild();persist();render()};
     toast('Marked done',u,'Only partly?',function(){openLog(id)});
   }else ui.undo=null;
@@ -829,6 +833,9 @@ function renderBanner(){
   var el=$('#banner'),has=state.tasks.some(function(t){return t.sample}),ms=ui.hideMissed?[]:missed(),h='';
   if(ms.length){var mm=ms.reduce(function(a,t){return a+t.dur},0);
     h+='<div class="banner miss"><span><b>'+ms.length+' unfinished task'+(ms.length>1?'s':'')+'</b> from earlier days ('+hh(mm)+'). Move them to the backlog, then place them in free slots.</span><button class="btn sm pri" data-act="missed-bank">Move to backlog</button><button class="btn sm" data-act="missed-hide">Hide</button></div>'}
+  var lp=ui.hideLapsed?[]:lapsed();
+  if(lp.length){var lm=lp.reduce(function(a,t){return a+t.dur},0);
+    h+='<div class="banner miss"><span><b>'+lp.length+' task'+(lp.length>1?'s':'')+'</b> today ran past '+(lp.length>1?'their':'its')+' time and '+(lp.length>1?'are':'is')+' not ticked ('+hh(lm)+'). Tick what you finished. Move the rest to the backlog.</span><button class="btn sm pri" data-act="lapsed-bank">Move to backlog</button><button class="btn sm" data-act="lapsed-hide">Hide</button></div>'}
   if(dow(TODAY)===6&&!ui.hideReview&&ui.view!=='review')h+='<div class="banner"><span><b>It is Sunday.</b> Look back at the week and plan the next one.</span><button class="btn sm pri" data-act="review-open">Open weekly review</button><button class="btn sm" data-act="review-hide">Hide</button></div>';
   if(has)h+='<div class="banner"><span>A sample plan is loaded so you can see how the planner works. Your own tasks will sit next to it.</span><button class="btn sm" data-act="clear-samples">Clear samples</button><button class="btn sm" data-act="keep-samples">Keep and edit</button></div>';
   el.hidden=!h;el.innerHTML=h;
@@ -1012,6 +1019,48 @@ function saveLog(form){
   },function(){return 'Logged '+p+'% done'+(log.f?' · focus '+log.f+'/5':'')+(moved?'. '+dur(moved)+' moved to the backlog.':'.')});
 }
 
+/* ---------- finished early: record the real time, free the rest, offer to use it ---------- */
+function earlyInfo(t,studied){
+  if(!t||t.date!==TODAY||t.start==null||t.kind==='R'||t.test)return null;
+  var n=new Date(),nm=n.getHours()*60+n.getMinutes(),te=t.start+t.dur;
+  if(nm<t.start||te-nm<15)return null;
+  var end=Math.min(te,Math.ceil(nm/5)*5),act,st;
+  if(studied!=null&&studied>0){act=Math.max(5,Math.ceil(studied/5)*5);st=Math.max(t.start,end-act);act=Math.min(act,end-st)}
+  else{st=t.start;act=Math.max(5,end-st)}
+  if(act<5||te-(st+act)<10)return null;
+  return {id:t.id,st:st,act:act,end:st+act,te:te,orig:t.dur,os:t.start,timer:studied!=null};
+}
+function openEarly(id,i){
+  var t=get(id);if(!t)return;
+  var others=onDay(t.date).filter(function(x){return x.id!==id&&x.start!=null});
+  var nxt=others.filter(function(x){return x.start>=i.end})[0];
+  var room=Math.min(i.te,nxt?nxt.start:i.te)-i.end;
+  var older=function(a,b){return (a.from||'9')<(b.from||'9')?-1:(a.from||'9')>(b.from||'9')?1:0};
+  var fills=bank().filter(function(b){return b.dur<=room}).sort(older).slice(0,2);
+  var mv=nxt&&!nxt.done&&!nxt.test&&nxt.kind!=='R'&&nxt.start-i.end>=10&&!others.some(function(x){return x!==nxt&&x.start<nxt.start&&x.start+x.dur>i.end})?nxt:null;
+  i.mv=mv?mv.id:null;ui.early=i;ui.overlay={kind:'early',id:id};
+  var b=function(mode,txt,bid,pri){return '<button type="button" class="btn'+(pri?' pri':'')+'" data-act="early-apply" data-mode="'+mode+'"'+(bid?' data-bid="'+bid+'"':'')+'>'+txt+'</button>'};
+  var h='<div class="sheet" id="ef" role="dialog" aria-modal="true" aria-labelledby="efh"><h3 id="efh">Finished early?</h3>'+
+    '<p class="empty" style="margin:-4px 0 0"><b>'+esc(t.title)+'</b> was planned '+range(i.os,i.te)+' ('+dur(i.orig)+'). '+(i.timer?'You studied about '+dur(i.act)+'.':'It is '+clock(i.end)+' now.')+' Finishing now frees <b>'+dur(i.te-i.end)+'</b>.</p>'+
+    '<div class="opts">'+b('free','Yes, it was finished at '+clock(i.end)+'. Keep the time free.','',true)+
+    (mv?b('next','Yes, and start “'+esc(mv.title)+'” at '+clock(i.end)+' instead of '+clock(mv.start)+'.'):'')+
+    fills.map(function(f){return b('fill','Yes, and use the time for “'+esc(f.title)+'” ('+dur(f.dur)+') from the backlog.',f.id)}).join('')+
+    (i.timer?'':'<button type="button" class="btn" data-act="early-full">No, it took the full time</button>')+
+    '<button type="button" class="btn" data-act="early-part">Only part of it was done</button></div>'+
+    '<div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button></div></div>';
+  openOv(h);
+}
+function applyEarly(mode,bid){
+  var i=ui.early,t=i&&get(i.id);closeOv();ui.early=null;if(!t)return;
+  var b=mode==='fill'&&bid?get(bid):null,mv=mode==='next'&&i.mv?get(i.mv):null;
+  mutate(function(){
+    t.done=true;t.start=i.st;t.dur=i.act;t.log={p:100,m:i.act,e:i.orig,s:i.os};t.sample=false;
+    if(b&&!b.date){b.date=t.date;b.start=i.end;b.from='';b.sample=false}
+    if(mv&&mv.date===t.date)mv.start=i.end;
+  },'Finished early. '+(b?'“'+b.title+'” now fills the time.':mv?'“'+mv.title+'” moved up to '+clock(i.end)+'.':dur(i.te-i.end)+' freed.'));
+}
+var lapsed=function(){var n=new Date(),nm=n.getHours()*60+n.getMinutes();return onDay(TODAY).filter(function(t){return movable(t)&&!t.sample&&t.start!=null&&t.start+t.dur<=nm&&!(timer&&timer.id===t.id)})};
+
 /* ---------- weekly review ---------- */
 function weekData(a){
   var r={a:a,days:[],plan:0,done:0,sub:{P:{p:0,d:0},C:{p:0,d:0},M:{p:0,d:0},T:{p:0,d:0}},slipped:[],todo:[],tests:[],logs:[],hit:0},i;
@@ -1100,6 +1149,7 @@ function endTimer(mode){
   stopTimer();
   if(!t||t.done)return;
   var pct=planned?Math.min(100,studied/planned*100):100;
+  if(mode==='done'){var ei=earlyInfo(t,studied);if(ei){openEarly(id,ei);return}}
   if(mode==='done'&&pct>=90){
     mutate(function(){t.done=true;t.log={p:100,m:studied};t.sample=false},'Marked done. '+studied+' minutes logged.');
     return;
@@ -1113,7 +1163,7 @@ function beep(){
 }
 function tmTick(){
   if(!timer){return}
-  if(!get(timer.id)||get(timer.id).done){stopTimer();return}
+  var tt=get(timer.id);if(!tt||tt.done||!tt.date){stopTimer();return}
   var r=tmRem(),c=$('#tm-clock'),f=$('#tm-fill');
   if(c)c.textContent=timer.fired?'Time is up':tmFmt(r);
   if(f)f.style.width=Math.min(100,(1-r/timer.total)*100)+'%';
@@ -1352,7 +1402,7 @@ function testPill(d){
   return '<span class="tps">'+shown+(ts.length>2?'<span class="tpill">+'+(ts.length-2)+' more</span>':'')+'</span>';
 }
 function resNote(t){var p=pctOf(t);return p==null?'':' · '+pc(p)}
-function logNote(t){var l=t.done&&t.log;if(!l)return '';return (l.p!=null&&l.p<100?' · '+l.p+'% done':'')+(l.f?' · focus '+l.f+'/5':'')}
+function logNote(t){var l=t.done&&t.log;if(!l)return '';return (l.p!=null&&l.p<100?' · '+l.p+'% done':'')+(l.f?' · focus '+l.f+'/5':'')+(l.e&&l.e>t.dur?' · early (planned '+dur(l.e)+')':'')}
 
 /* ---------- tests view ---------- */
 function resultsInScope(all){
@@ -1988,8 +2038,13 @@ document.addEventListener('click',function(e){
     case 'missed-bank':toBank(missed().map(function(t){return t.id}),'Moved '+missed().length+' unfinished tasks to the backlog');break;
     case 'missed-hide':ui.hideMissed=true;renderBanner();break;
     case 'add-analysis':addAnalysis(id);break;
+    case 'early-apply':applyEarly(el.dataset.mode,el.dataset.bid);break;
+    case 'early-full':{var eid=ui.overlay&&ui.overlay.id;closeOv();ui.early=null;if(eid)toast('Marked done',function(){var x=get(eid);if(x){x.done=false;x.log=null;rebuild();persist();render()}},'Only partly?',function(){openLog(eid)});break}
+    case 'early-part':{var pid=ui.overlay&&ui.overlay.id;closeOv();ui.early=null;if(pid)openLog(pid);break}
+    case 'lapsed-bank':{var ids=lapsed().map(function(t){return t.id});toBank(ids,'Moved '+ids.length+' task'+(ids.length>1?'s':'')+' to the backlog');break}
+    case 'lapsed-hide':ui.hideLapsed=true;renderBanner();break;
     case 'log-form':{var lid=ui.overlay&&ui.overlay.id;closeOv();if(lid)openLog(lid);break}
-    case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){ut.done=false;ut.log=null},'Marked not done');break}
+    case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){if(ut.log&&ut.log.e&&ut.log.s!=null){ut.dur=ut.log.e;ut.start=ut.log.s}ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
     case 'timer-start-form':{var sid=ui.overlay&&ui.overlay.id;closeOv();if(sid)startTimer(sid);break}
     case 'timer-pause':if(timer){timer.paused=tmRem();saveTimer();renderTimer()}break;
@@ -2175,6 +2230,18 @@ document.addEventListener('pointercancel',function(e){endDrag(e,true)});
 
 /* ---------- start ---------- */
 var hadLocal=false;
+function dayTick(){
+  if(drag)return;
+  var n=iso(new Date());
+  if(n!==TODAY){var was=TODAY;TODAY=n;if(ui.sel===was)ui.sel=n;ui.hideMissed=ui.hideLapsed=false;render();return}
+  if(ui.overlay)return;
+  renderBanner();
+  var nl=document.querySelector('.now');
+  if(nl&&ui.sel===TODAY){var d=new Date(),m=d.getHours()*60+d.getMinutes();nl.style.top=((m-T0)/60*HP)+'px'}
+}
+setInterval(dayTick,30000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)dayTick()});
+window.addEventListener('focus',dayTick);
 (function init(){
   var local=hydrate(readLS());
   if(local){state=local;hadLocal=true}

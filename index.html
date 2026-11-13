@@ -99,7 +99,7 @@ button{cursor:pointer}
 .main{display:flex;flex-direction:column;gap:12px;min-width:0}
 @media (min-width:1040px){
   .layout{grid-template-columns:minmax(0,1fr) 372px}
-  #panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain}
+  #panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
 }
 
 /* summary strip */
@@ -251,7 +251,10 @@ body.has-timer{padding-bottom:130px}
 .dragging{opacity:.45}
 
 /* day timeline */
-.tlw{max-height:min(76vh,800px);overflow-y:auto;overscroll-behavior:contain}
+.tlw{max-height:min(76vh,800px);overflow-y:auto}
+@media (max-width:1039px){.tlw{max-height:none;overflow:visible}}
+body.ovopen{overflow:hidden}
+.sheet{overscroll-behavior:contain}
 .tli{position:relative;margin:14px 12px 14px 0}
 .hl{position:absolute;left:56px;right:0;border-top:1px solid var(--line);height:0}
 .hl span{position:absolute;left:-56px;top:-8px;width:46px;text-align:right;font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -1339,11 +1342,11 @@ function toast(msg,undo,altLabel,altFn){
 var lastFocus=null;
 function openOv(html,focusSel){
   lastFocus=document.activeElement;
-  $('#ov').innerHTML='<div class="scrim" data-act="close-ov"></div>'+html;
+  $('#ov').innerHTML='<div class="scrim" data-act="close-ov"></div>'+html;document.body.classList.add('ovopen');
   var f=focusSel&&$(focusSel);if(f)f.focus();
 }
 function closeOv(){
-  $('#ov').innerHTML='';ui.overlay=null;
+  $('#ov').innerHTML='';ui.overlay=null;document.body.classList.remove('ovopen');
   if(lastFocus&&document.contains(lastFocus)&&lastFocus.focus)lastFocus.focus();
 }
 function typeOptions(kind,sel){return TYPES[kind].map(function(t){return '<option'+(t===sel?' selected':'')+'>'+t+'</option>'}).join('')}

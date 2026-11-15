@@ -1837,7 +1837,7 @@ function floatOpen(mode){
   }
   if(document.pictureInPictureEnabled&&HTMLCanvasElement.prototype.captureStream){
     if(document.pictureInPictureElement)return;
-    pipC=document.createElement('canvas');pipC.width=750;pipC.height=276;
+    pipC=document.createElement('canvas');pipC.width=300;pipC.height=110;
     pipV=document.createElement('video');pipV.muted=true;pipV.playsInline=true;pipV.srcObject=pipC.captureStream(5);
     vidDraw();
     var ms=navigator.mediaSession,H=function(n,f){try{ms.setActionHandler(n,f)}catch(e){}};

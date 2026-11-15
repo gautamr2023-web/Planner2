@@ -347,6 +347,19 @@ body.ovopen{overflow:hidden}
 .bk-row>input{width:18px;height:18px}
 .bk-row .blk.row{min-width:0}
 .bk-btns{flex-direction:row;flex-wrap:wrap;justify-content:flex-end}
+.pl-top{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.pl-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 96px 78px 92px auto;gap:6px;align-items:center;margin-top:6px}
+.pl-row input,.pl-row select,.pl-add input,.pl-top input{height:34px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);padding:0 8px;min-width:0;font-size:13px}
+.pl-add{display:flex;gap:6px;margin-top:6px}.pl-add input{flex:1}
+.pl-bank summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
+.pl-bk{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px solid var(--line)}
+.pl-bk label{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.pl-bk select{height:30px;border:1px solid var(--line-strong);border-radius:7px;background:var(--surface);font-size:13px}
+.pl-tx{min-width:0}.pl-tx b{display:block;font-weight:600;overflow-wrap:anywhere}.pl-tx small{color:var(--ink-3);font-size:12px}
+.pl-opts{display:flex;flex-direction:column;gap:4px}
+.pl-pv{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line)}
+.pl-pv.rest{opacity:.7}.pl-time{width:120px;flex:none;font-size:12px;color:var(--ink-2)}
+@media (max-width:640px){.pl-row{grid-template-columns:repeat(4,minmax(0,1fr));padding-top:8px;border-top:1px solid var(--line)}.pl-row .pl-t{grid-column:1/4;order:1}.pl-row .ib{grid-column:4;order:2}.pl-row select{grid-column:span 2;order:3}.pl-time{width:96px}}
 .opts{display:grid;gap:8px}.opts .btn{text-align:left;white-space:normal}
 .kopt{position:relative}
 .kopt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
@@ -488,7 +501,7 @@ var SUBS={P:'Physics',C:'Chemistry',M:'Maths',O:'School subject',T:'Test',R:'Res
 var STUDY_TYPES=['Theory','DPP','PYQ','Revision','Doubts','Notes'];
 var TYPES={P:STUDY_TYPES,C:STUDY_TYPES,M:STUDY_TYPES,T:['Full test','Part test','Chapter test','Full mock','Analysis','Sectional test'],R:['Meal','Break','Walk']};
 var T0=300,T1=1440,HP=48;
-var DEFAULTS={exam:'2027-01-22',min:12,max:14,sleep:6.5,cap:0};
+var DEFAULTS={exam:'2027-01-22',min:12,max:14,sleep:6.5,cap:0,ds:360,de:1380,pa:360,pb:660,qa:960,qb:1200};
 
 /* minutes -> text */
 var hh=function(m){var h=Math.round(m/6)/10;return (h%1===0?h.toFixed(0):h.toFixed(1))+'h'};
@@ -583,7 +596,7 @@ function capacity(){
 function tiersOf(d){
   if(tierC.has(d))return tierC.get(d);
   var cap=capacity().min,out={},run=0,l=onDay(d).filter(function(t){return t.kind!=='R'});
-  l.forEach(function(t){if(t.test||t.done||t.pr===1){out[t.id]=1;run+=t.dur}else if(t.pr===2||t.pr===3)out[t.id]=t.pr});
+  l.forEach(function(t){if(t.test||t.done||t.pr===1||(t.kind==='T'&&t.type==='Analysis')){out[t.id]=1;run+=t.dur}else if(t.pr===2||t.pr===3)out[t.id]=t.pr});
   l.forEach(function(t){
     if(out[t.id])return;
     out[t.id]=run+t.dur<=cap?1:run+t.dur<=cap*1.3?2:3;run+=t.dur;
@@ -967,11 +980,11 @@ function renderControls(){
   var nb=bank().filter(function(t){return !snoozed(t)}).length;
   var seg=['month','week','day','bank','tests','review'].map(function(v){return '<button data-act="view" data-v="'+v+'" aria-pressed="'+(ui.view===v)+'">'+v[0].toUpperCase()+v.slice(1)+(v==='bank'&&nb?' <span class="num bkn">'+nb+'</span>':'')+'</button>'}).join('');
   var h='<div class="seg" role="group" aria-label="View">'+seg+'</div>';
-  if(ui.view==='bank')h+='<h2 class="th">Backlog bank</h2><span class="sp"></span><button class="btn" data-act="clean-up">Clean up</button><button class="btn pri" data-act="add-bank">+ Add item</button>';
+  if(ui.view==='bank')h+='<h2 class="th">Backlog bank</h2><span class="sp"></span><button class="btn" data-act="clean-up">Clean up</button><button class="btn" data-act="plan-open">Plan from the bank</button><button class="btn pri" data-act="add-bank">+ Add item</button>';
   else if(ui.view==='tests')h+='<h2 class="th">Tests and results</h2><span class="sp"></span><button class="btn" data-act="import">Import schedule</button><button class="btn pri" data-act="add-test">+ Add test</button>';
   else h+='<div class="nav"><button class="ib" data-act="prev" aria-label="Previous">\u2039</button><h2>'+periodLabel()+'</h2><button class="ib" data-act="next" aria-label="Next">\u203a</button></div>'+
     '<button class="btn" data-act="today">Today</button><span class="sp"></span>'+
-    '<button class="btn pri" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
+    '<button class="btn pri" data-act="plan-open">Plan my day</button><button class="btn" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
   $('#controls').innerHTML=h;
 }
 function renderSummary(){
@@ -1336,7 +1349,7 @@ function bkBody(){
     '<button class="btn sm danger" data-act="bk-bulk" data-m="drop">Drop</button><button class="btn sm" data-act="bk-clear">Clear</button></div>';
   h+=l.length?'<ul class="lst bk-list">'+l.slice(0,150).map(function(t){
     var a=ageOf(t),sz=snoozed(t);
-    return '<li class="bk-row"><input type="checkbox" data-bsel="'+t.id+'"'+(sel[t.id]?' checked':'')+' aria-label="Select '+esc(t.title)+'"><div class="blk row k-'+t.kind+'"><span class="chip">'+t.kind+'</span><button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+dur(t.dur)+' · '+esc(t.type)+(t.from?' · <span class="'+(a>=7?'miss-tag':'')+'">'+(a?a+' days old':'carried over')+'</span>':'')+(sz?' · snoozed until '+shortDate(t.sn):'')+'</small></button>'+
+    return '<li class="bk-row"><input type="checkbox" data-bsel="'+t.id+'"'+(sel[t.id]?' checked':'')+' aria-label="Select '+esc(t.title)+'"><div class="blk row k-'+t.kind+'"><span class="chip">'+t.kind+'</span><button class="cbody" data-act="edit" data-id="'+t.id+'"><b>'+esc(t.title)+'</b><small class="num">'+dur(t.dur)+' · '+esc(t.type)+(t.from?' · <span class="'+(a>=7?'miss-tag':'')+'">'+(a?a+' days old':'carried over')+'</span>':'')+(sz?' · snoozed until '+shortDate(t.sn):'')+(t.type==='Analysis'?' · Must':'')+'</small></button>'+
       '<span class="bbtns bk-btns">'+(sz?'<button class="btn sm" data-act="bk-wake" data-id="'+t.id+'">Wake up</button>':'<button class="btn sm" data-act="autoplace" data-id="'+t.id+'">Next free slot</button><button class="btn sm" data-act="bk-snz" data-id="'+t.id+'">Snooze</button>')+'<button class="btn sm" data-act="bk-drop" data-id="'+t.id+'" aria-label="Drop '+esc(t.title)+'">Drop</button></span></div></li>';
   }).join('')+'</ul>'+(l.length>150?'<p class="hint">Showing the first 150. Narrow the filters to see the rest.</p>':''):'<p class="empty">'+(all?'Nothing matches these filters.':'The bank is empty. Tasks you do not finish can wait here, but only if they are still worth doing.')+'</p>';
   return h;
@@ -1363,6 +1376,185 @@ function bankBulk(m){
   var to=m==='s3'?addDays(TODAY,3):m==='s7'?addDays(TODAY,7):String(($('#bk-sdate')||{}).value||'');
   if(!to||to<=TODAY){toast('Pick a day after today.');return}
   ui.bsel={};mutate(function(){list.forEach(function(t){t.sn=to})},'Snoozed '+list.length+' item'+(list.length>1?'s':'')+' until '+shortDate(to));
+}
+/* ---------- plan my day: rough tasks in, a schedule out, hardest work in your best hours ---------- */
+var INTENSITY={Theory:3,PYQ:3,Doubts:3,DPP:2,Analysis:2,Revision:1,Notes:1};
+var PL_DURS=[30,45,60,90,120,150,180];
+var PL_K=[['P','Physics'],['C','Chemistry'],['M','Maths'],['A','Test analysis']];
+function energyAt(m){
+  var S=state.settings;
+  if((m>=S.pa&&m<S.pb)||(m>=S.qa&&m<S.qb))return 3;
+  if(m>=1290||m<360)return 1;
+  if(m>=780&&m<930)return 1;
+  return 2;
+}
+function bestHours(){
+  var by={},n=0;
+  state.tasks.forEach(function(t){if(t.done&&t.log&&t.log.f&&t.start!=null&&t.kind!=='R'&&!t.test){var h=Math.floor(t.start/60);(by[h]=by[h]||[]).push(t.log.f);n++}});
+  if(n<8)return null;
+  var best=null;
+  for(var a=6;a<=19;a++){
+    var sum=0,c=0;
+    for(var h=a;h<a+4;h++)if(by[h])by[h].forEach(function(f){sum+=f;c++});
+    if(c>=5&&(!best||sum/c>best.avg))best={a:a*60,b:(a+4)*60,avg:sum/c,c:c};
+  }
+  return best?Object.assign(best,{n:n}):null;
+}
+function dayBusy(d,excl){
+  return onDay(d).filter(function(t){return t.start!=null&&!(excl&&excl[t.id])}).map(function(t){return {s:t.start,e:t.start+t.dur,r:t.kind==='R',k:t.kind,test:!!t.test}});
+}
+function fitIn(spec,busy,from){
+  var S=state.settings,best=null,tgt=INTENSITY[spec.type]||2,start=Math.ceil(Math.max(S.ds,from||0)/15)*15;
+  for(var s0=start;s0+spec.dur<=S.de;s0+=15){
+    var e=s0+spec.dur,ok=true,adj=0,afterTest=false,i,b,buf;
+    for(i=0;i<busy.length&&ok;i++){
+      b=busy[i];buf=b.r?0:(spec.dur>=90||b.e-b.s>=90?15:10);
+      if(s0-buf<b.e&&e+buf>b.s){ok=false;break}
+      if(!b.r){
+        if(spec.type!=='Analysis'&&b.k===spec.kind&&((b.e<=s0&&s0-b.e<=20)||(b.s>=e&&b.s-e<=20)))adj=1;
+        if(b.test&&b.e<=s0&&s0-b.e<=120)afterTest=true;
+      }
+    }
+    if(!ok)continue;
+    var sum=0,n=0,m;for(m=s0;m<e;m+=15){sum+=energyAt(m);n++}
+    var cost=Math.abs(sum/n-tgt)*100+adj*40+(s0-S.ds)/6-(spec.type==='Analysis'&&afterTest?60:0);
+    if(!best||cost<best.cost)best={s:s0,cost:cost,en:sum/n};
+  }
+  return best;
+}
+/* Must goes first and takes the best slot for its kind of work. Heavy work (theory, PYQs, doubts) wants peak hours,
+   light work (notes, revision) is happy in the dips. Same-subject blocks are kept apart. Short gaps are left as rest. */
+function planSchedule(date,specs,o){
+  var S=state.settings,cap=capacity().min,res={placed:[],left:[],meals:[]},n=new Date();
+  var from=date===TODAY?Math.ceil((n.getHours()*60+n.getMinutes()+5)/5)*5:0,busyBy={};
+  var busyFor=function(d){if(!busyBy[d])busyBy[d]=dayBusy(d,o.excl);return busyBy[d]};
+  var order=specs.slice().sort(function(a,b){return a.pr-b.pr||(INTENSITY[b.type]||2)-(INTENSITY[a.type]||2)||b.dur-a.dur});
+  if(o.meals&&!onDay(date).some(function(t){return t.kind==='R'})){
+    [[450,30,'Breakfast'],[780,45,'Lunch + rest'],[1170,45,'Dinner']].forEach(function(m){
+      var b=busyFor(date);
+      if(m[0]<from||m[0]+m[1]>S.de||b.some(function(x){return x.s<m[0]+m[1]&&x.e>m[0]}))return;
+      res.meals.push({title:m[2],start:m[0],dur:m[1]});b.push({s:m[0],e:m[0]+m[1],r:true,k:'R'});
+    });
+  }
+  var load=function(d){return busyFor(d).reduce(function(a,b){return a+(b.r?0:b.e-b.s)},0)};
+  order.forEach(function(sp){
+    var f=fitIn(sp,busyFor(date),from);
+    if(f){busyFor(date).push({s:f.s,e:f.s+sp.dur,r:false,k:sp.kind});res.placed.push({spec:sp,date:date,start:f.s,en:f.en});return}
+    if(o.spill&&sp.pr<=2){
+      for(var i=1;i<=14;i++){
+        var d=addDays(date,i);
+        if(load(d)+sp.dur>Math.round(cap*1.3))continue;
+        var g=fitIn(sp,busyFor(d),0);
+        if(g){busyFor(d).push({s:g.s,e:g.s+sp.dur,r:false,k:sp.kind});res.placed.push({spec:sp,date:d,start:g.s,en:g.en});return}
+      }
+    }
+    res.left.push(sp);
+  });
+  res.placed.sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:a.start-b.start});
+  return res;
+}
+var plKind=function(k){return k==='A'?'T':k};
+function plRowHTML(r,i){
+  var a=r.k==='A';
+  return '<div class="pl-row" data-i="'+i+'"><input class="pl-t" data-pl="title" maxlength="80" value="'+esc(r.title)+'" placeholder="Task, e.g. Rotation PYQs" aria-label="Task">'+
+    '<select data-pl="k" aria-label="Subject">'+PL_K.map(function(o){return '<option value="'+o[0]+'"'+(r.k===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
+    '<select data-pl="type" aria-label="Type"'+(a?' disabled':'')+'>'+(a?'<option>Analysis</option>':STUDY_TYPES.map(function(t){return '<option'+(r.type===t?' selected':'')+'>'+t+'</option>'}).join(''))+'</select>'+
+    '<select data-pl="dur" aria-label="Minutes">'+PL_DURS.map(function(m){return '<option value="'+m+'"'+(+r.dur===m?' selected':'')+'>'+dur(m)+'</option>'}).join('')+'</select>'+
+    '<select data-pl="pr" aria-label="Priority"'+(a?' disabled':'')+'>'+[[1,'Must'],[2,'Should'],[3,'Stretch']].map(function(o){return '<option value="'+o[0]+'"'+((a?1:+r.pr)===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'+
+    '<button type="button" class="ib" data-act="pl-del" data-i="'+i+'" aria-label="Remove this row">\u2715</button></div>';
+}
+function plSpecs(){
+  var pl=ui.pl,specs=[];
+  pl.rows.forEach(function(r){
+    if(!String(r.title).trim()&&!r.k)return;
+    var a=r.k==='A',title=String(r.title).trim()||(a?'Test analysis':SUBS[r.k]+' '+r.type);
+    specs.push({id:null,title:title,kind:plKind(r.k),type:a?'Analysis':r.type,dur:+r.dur,pr:a?1:+r.pr});
+  });
+  Object.keys(pl.bank).forEach(function(id){var t=get(id);if(t&&!t.date)specs.push({id:id,title:t.title,kind:t.kind,type:t.type,dur:t.dur,pr:t.type==='Analysis'?1:+pl.bank[id]})});
+  if(pl.rearr)pl.rearrIds.forEach(function(id){var t=get(id);if(t)specs.push({id:id,title:t.title,kind:t.kind,type:t.type,dur:t.dur,pr:t.type==='Analysis'?1:(tierOf(t)||2),re:true,orig:t.date})});
+  return specs;
+}
+function plSummary(){
+  var el=$('#pl-sum');if(!el)return;
+  var sp=plSpecs().filter(function(x){return !(ui.pl.rows.length===1&&false)}),m=[0,0,0,0],c=capacity().min;
+  sp.forEach(function(x){m[x.pr]+=x.dur});
+  var tot=m[1]+m[2]+m[3],fixed=onDay(ui.pl.date).filter(function(t){return t.kind!=='R'&&(!ui.pl.rearr||ui.pl.rearrIds.indexOf(t.id)<0)}).reduce(function(a,t){return a+t.dur},0);
+  var msg=m[1]+fixed>c*1.15?'Your Must tasks (plus what is already on the day) come to '+hh(m[1]+fixed)+', more than the '+hh(c)+' you usually finish. Move some to Should or Stretch.':'';
+  el.innerHTML='<b class="num">'+hh(tot)+'</b> to place · Must <b class="num">'+hh(m[1])+'</b> · Should <b class="num">'+hh(m[2])+'</b> · Stretch <b class="num">'+hh(m[3])+'</b>'+(fixed?' · already on the day <b class="num">'+hh(fixed)+'</b>':'')+' · you usually finish '+hh(c)+(msg?'<br><span class="'+'over'+'">'+msg+'</span>':'');
+}
+function renderPlan(first){
+  var pl=ui.pl,d=pl.date,H;
+  if(pl.stage==='preview'){
+    var r=pl.res,byD={};
+    r.placed.forEach(function(p){(byD[p.date]=byD[p.date]||[]).push(p)});
+    var eLab=function(e){return e>=2.5?'peak hours':e>=1.5?'normal hours':'low-energy hours'};
+    H='<form class="sheet wide" id="pl" role="dialog" aria-modal="true" aria-labelledby="plh"><h3 id="plh">Proposed plan</h3>'+
+      '<p class="empty" style="margin:-4px 0 0">Must tasks got the best slots. Heavy work sits in your peak hours.'+(r.meals.length?' Meal breaks are included.':'')+'</p>'+
+      Object.keys(byD).sort().map(function(day){
+        var meals=day===d?r.meals:[];
+        var items=byD[day].map(function(p){return {s:p.start,h:'<li class="pl-pv"><span class="num pl-time">'+range(p.start,p.start+p.spec.dur)+'</span><span class="chip k-'+p.spec.kind+'">'+p.spec.kind+'</span><span class="pl-tx"><b>'+esc(p.spec.title)+'</b><small>'+dur(p.spec.dur)+' · '+esc(p.spec.type)+' · '+TIERN[p.spec.pr]+' · '+eLab(p.en)+(day!==d?' · moved on':'')+'</small></span></li>'}})
+          .concat(meals.map(function(m){return {s:m.start,h:'<li class="pl-pv rest"><span class="num pl-time">'+range(m.start,m.start+m.dur)+'</span><span class="chip k-R">R</span><span class="pl-tx"><b>'+m.title+'</b></span></li>'}}));
+        items.sort(function(a,b){return a.s-b.s});
+        return '<h4 style="margin:6px 0 0">'+shortDate(day)+(day!==d?' (spilled over)':'')+'</h4><ul class="lst">'+items.map(function(x){return x.h}).join('')+'</ul>';
+      }).join('')+
+      (r.left.length?'<h4 style="margin:6px 0 0">Did not fit</h4><ul class="lst">'+r.left.map(function(x){return '<li class="pl-pv"><span class="pl-tx"><b>'+esc(x.title)+'</b><small>'+dur(x.dur)+' · '+TIERN[x.pr]+' · will be saved in the bank'+'</small></span></li>'}).join('')+'</ul>':'')+
+      '<div class="actions"><button type="button" class="btn" data-act="pl-back">Back</button><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="button" class="btn pri" data-act="pl-apply">Apply plan</button></div></form>';
+  }else{
+    var act=bank().filter(function(t){return !snoozed(t)}).sort(function(a,b){return (a.from||'9')<(b.from||'9')?-1:1}).slice(0,30);
+    var unf=onDay(d).filter(movable);pl.rearrIds=unf.map(function(t){return t.id});
+    var hasR=onDay(d).some(function(t){return t.kind==='R'});
+    H='<form class="sheet wide" id="pl" role="dialog" aria-modal="true" aria-labelledby="plh"><h3 id="plh">Plan my day</h3>'+
+      '<p class="empty" style="margin:-4px 0 0">Add rough tasks with a length and a priority. The planner puts them in your best hours, Must first. You can still move anything afterwards.</p>'+
+      '<div class="pl-top"><label class="f" style="flex:1 1 150px">Plan for<input type="date" id="pl-date" value="'+d+'" min="'+TODAY+'"></label><button type="button" class="btn sm" data-act="pl-day" data-v="0">Today</button><button type="button" class="btn sm" data-act="pl-day" data-v="1">Tomorrow</button></div>'+
+      '<div id="pl-rows">'+pl.rows.map(plRowHTML).join('')+'</div>'+
+      '<div class="pl-add"><input id="pl-quick" maxlength="80" placeholder="Type a task and press Enter to add it" aria-label="Quick add a task"><button type="button" class="btn sm" data-act="pl-add">+ Row</button></div>'+
+      (act.length?'<details class="pl-bank"'+(Object.keys(pl.bank).length?' open':'')+'><summary>Add from the bank ('+act.length+' active)</summary><ul class="lst">'+act.map(function(t){
+        var on=pl.bank[t.id]!=null,a=ageOf(t);
+        return '<li class="pl-bk"><label><input type="checkbox" data-plb="'+t.id+'"'+(on?' checked':'')+'><span class="chip k-'+t.kind+'">'+t.kind+'</span><span class="pl-tx"><b>'+esc(t.title)+'</b><small>'+dur(t.dur)+' · '+esc(t.type)+(a?' · '+a+' days old':'')+(t.type==='Analysis'?' · always Must':'')+'</small></span></label>'+
+          (t.type==='Analysis'?'':'<select data-plbp="'+t.id+'" aria-label="Priority">'+[[1,'Must'],[2,'Should'],[3,'Stretch']].map(function(o){return '<option value="'+o[0]+'"'+((on?+pl.bank[t.id]:(t.pr||(a>=7?1:2)))===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>')+'</li>';
+      }).join('')+'</ul></details>':'')+
+      '<div class="pl-opts">'+(hasR?'':'<label class="cb"><input type="checkbox" data-plo="meals"'+(pl.meals?' checked':'')+'>Add meal breaks (breakfast, lunch, dinner)</label>')+
+        (unf.length?'<label class="cb"><input type="checkbox" data-plo="rearr"'+(pl.rearr?' checked':'')+'>Also re-arrange my '+unf.length+' unfinished task'+(unf.length>1?'s':'')+' on this day (tests stay put)</label>':'')+
+        '<label class="cb"><input type="checkbox" data-plo="spill"'+(pl.spill?' checked':'')+'>Spread Must and Should tasks that do not fit over the next days</label></div>'+
+      '<p class="hint" id="pl-sum" style="margin:0"></p>'+
+      '<p class="hint" style="margin:0">Your best hours: '+range(S0().pa,S0().pb)+(S0().qb>S0().qa?' and '+range(S0().qa,S0().qb):'')+'. Change them in settings.</p>'+
+      '<div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Preview the plan</button></div></form>';
+  }
+  if(first){ui.overlay={kind:'plan'};openOv(H,'#pl-quick')}
+  else{var f=$('#pl');if(f)f.outerHTML=H}
+  if(pl.stage!=='preview')plSummary();
+}
+var S0=function(){return state.settings};
+function openPlan(date){
+  var d=date||ui.sel;
+  if(d<TODAY)d=TODAY;
+  if(!date&&d===TODAY&&new Date().getHours()>=21)d=addDays(TODAY,1);
+  ui.pl={date:d,rows:[{title:'',k:'P',type:'Theory',dur:60,pr:1}],bank:{},meals:!onDay(d).some(function(t){return t.kind==='R'}),rearr:false,spill:true,stage:'edit',res:null,rearrIds:[]};
+  renderPlan(true);
+}
+function plPreview(){
+  var pl=ui.pl,specs=plSpecs().filter(function(x){return x.dur>0});
+  if(!specs.length){toast('Add at least one task first.');return}
+  var excl={};if(pl.rearr)pl.rearrIds.forEach(function(id){excl[id]=1});
+  pl.res=planSchedule(pl.date,specs,{meals:pl.meals,spill:pl.spill,excl:excl});
+  pl.stage='preview';renderPlan(false);
+}
+function plApply(){
+  var pl=ui.pl,r=pl.res,newBank=0,moved=0;
+  closeOv();
+  mutate(function(){
+    r.meals.forEach(function(m){state.tasks.push({id:uid(),title:m.title,kind:'R',type:'Meal',date:pl.date,start:m.start,dur:m.dur,done:false,sample:false})});
+    r.placed.forEach(function(p){
+      var sp=p.spec;
+      if(sp.id){var t=get(sp.id);if(!t)return;t.date=p.date;t.start=p.start;t.from='';t.sn='';t.sample=false;if(!sp.re)t.pr=sp.type==='Analysis'?0:sp.pr}
+      else state.tasks.push({id:uid(),title:sp.title,kind:sp.kind,type:sp.type,date:p.date,start:p.start,dur:sp.dur,done:false,sample:false,pr:sp.type==='Analysis'?0:sp.pr});
+    });
+    r.left.forEach(function(sp){
+      if(sp.id){var t=get(sp.id);if(t&&sp.re){t.from=t.date;t.date='';t.start=null;t.sn='';moved++}}
+      else{state.tasks.push({id:uid(),title:sp.title,kind:sp.kind,type:sp.type,date:'',start:null,dur:sp.dur,done:false,sample:false,pr:sp.type==='Analysis'?0:sp.pr,from:''});newBank++}
+    });
+  },function(){return 'Planned '+r.placed.length+' task'+(r.placed.length===1?'':'s')+' for '+shortDate(pl.date)+(r.left.length?'. '+(newBank+moved)+' did not fit and '+(newBank+moved===1?'is':'are')+' in the bank.':'.')});
+  ui.sel=pl.date;ui.view='day';ui.tlKey=null;render();
 }
 /* ---------- weekly review ---------- */
 function weekData(a){
@@ -1550,7 +1742,7 @@ function renderPanel(){
   }else if(ui.menu==='copy'){
     menuHTML='<div class="menu"><p>Copy this day’s schedule. Days that already have tasks are skipped.</p><div class="acts"><button class="btn sm" data-act="copy" data-mode="next">Next day</button><button class="btn sm" data-act="copy" data-mode="week">Rest of this week</button><button class="btn sm" data-act="copy" data-mode="7">Next 7 days</button></div></div>';
   }
-  h+='<div class="ps"><div class="acts"><button class="btn sm pri" data-act="add" data-date="'+d+'">+ Add task</button>'+
+  h+='<div class="ps"><div class="acts"><button class="btn sm pri" data-act="plan-open" data-date="'+d+'">Plan my day</button><button class="btn sm" data-act="add" data-date="'+d+'">+ Add task</button>'+
     '<button class="btn sm" data-act="add-test" data-date="'+d+'">+ Test</button>'+
     '<button class="btn sm" data-act="menu" data-m="tpl" aria-expanded="'+(ui.menu==='tpl')+'">Template</button>'+
     '<button class="btn sm" data-act="menu" data-m="copy" aria-expanded="'+(ui.menu==='copy')+'">Copy day</button>'+
@@ -1619,7 +1811,7 @@ function openTaskForm(o){
     '<label class="f">Task<input id="tf-title" name="title" maxlength="80" placeholder="e.g. Rotational motion: 30 PYQs" value="'+esc(v.title)+'"></label>'+
     '<fieldset class="kinds"><legend>Subject</legend>'+kinds+'</fieldset>'+
     '<label class="f">Type<select name="type" id="tf-type">'+typeOptions(v.kind,v.type)+'</select></label>'+
-    '<label class="f">Priority<select name="pr">'+[['0','Auto: by your real pace'],['1','Must'],['2','Should'],['3','Stretch: can expire']].map(function(o){return '<option value="'+o[0]+'"'+(String(v.pr||0)===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'+
+    '<label class="f">Priority<select name="pr">'+[['0','Auto: by your real pace'],['1','Must'],['2','Should'],['3','Stretch: can expire']].map(function(o){return '<option value="'+o[0]+'"'+(String(v.pr||0)===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select><small>Test analysis is always Must.</small></label>'+
     '<label class="cb"><input type="checkbox" name="bank" id="tf-bank"'+(isBank?' checked':'')+'>Keep in the task bank (no day yet)</label>'+
     '<div class="grid3"><label class="f">Day<input type="date" name="date" id="tf-date" value="'+(v.date||ui.sel)+'"'+(isBank?' disabled':'')+'></label>'+
     '<label class="f">Start<input type="time" name="start" id="tf-start" step="900" value="'+st+'"'+(isBank?' disabled':'')+'></label>'+
@@ -1642,8 +1834,8 @@ function saveTask(form){
   if(date)ui.sel=date;
   closeOv();
   mutate(function(){
-    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false,pr:+fd.get('pr')||0,from:date?'':get(id).from||''});if(!date){get(id).done=false;get(id).log=null}}
-    else state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:start,dur:d,done:false,sample:false,pr:+fd.get('pr')||0});
+    if(id&&get(id)){Object.assign(get(id),{title:title,kind:kind,type:type,date:date,start:start,dur:d,sample:false,pr:kind==='T'&&type==='Analysis'?0:+fd.get('pr')||0,from:date?'':get(id).from||''});if(!date){get(id).done=false;get(id).log=null}}
+    else state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:start,dur:d,done:false,sample:false,pr:kind==='T'&&type==='Analysis'?0:+fd.get('pr')||0});
   },id?'Task updated':'Task added'+(date?' to '+shortDate(date):' to the bank'));
 }
 function planRevisions(id){
@@ -1658,6 +1850,7 @@ function planRevisions(id){
     });
   },function(){return made.length?'Added 30-minute revisions after '+made.join(', ')+' days':'Revisions are already planned.'});
 }
+var tm=function(m){return pad(Math.floor(m/60))+':'+pad(m%60)};
 function openSettings(){
   var S=state.settings;ui.overlay={kind:'settings'};
   openOv('<form class="sheet" id="sf" role="dialog" aria-modal="true" aria-labelledby="sfh">'+
@@ -1665,13 +1858,22 @@ function openSettings(){
     '<label class="f">JEE Main date<input type="date" name="exam" id="sf-exam" required value="'+S.exam+'"><small>NTA lists Session 1 as 22–30 January 2027 and calls the dates tentative. Change this if they move.</small></label>'+
     '<div class="grid2"><label class="f">Daily study, low (hours)<input type="number" name="min" min="1" max="14" step="0.5" value="'+S.min+'"></label><label class="f">Daily study, high (hours)<input type="number" name="max" min="1" max="16" step="0.5" value="'+S.max+'"></label></div>'+
     '<label class="f">Hours you really finish in a day<input type="number" name="cap" min="0" max="14" step="0.5" value="'+(S.cap||'')+'" placeholder="Auto"><small>Leave empty to use the average of your last 7 planned days. Tasks beyond this are marked Should or Stretch, and the planner fills days only up to it.</small></label>'+
+    '<fieldset class="f pk"><legend>Day and best focus hours</legend><div class="grid2"><label class="f">Day starts<input type="time" name="ds" value="'+tm(S.ds)+'"></label><label class="f">Day ends<input type="time" name="de" value="'+tm(S.de)+'"></label></div>'+
+    '<div class="grid2"><label class="f">Best hours: from<input type="time" name="pa" value="'+tm(S.pa)+'"></label><label class="f">to<input type="time" name="pb" value="'+tm(S.pb)+'"></label></div>'+
+    '<div class="grid2"><label class="f">Second best hours: from<input type="time" name="qa" value="'+(S.qb>S.qa?tm(S.qa):'')+'"></label><label class="f">to<input type="time" name="qb" value="'+(S.qb>S.qa?tm(S.qb):'')+'"></label></div>'+
+    '<small>Plan my day puts theory, PYQs and doubts here first, and notes or revision in the dips. '+(bestHours()?'<button type="button" class="link" data-act="pk-learn">Use the hours you focused best in</button> (from '+bestHours().n+' logged sessions).':'Log a few sessions with a focus rating and the planner can suggest your best hours.')+'</small></fieldset>'+
     '<label class="f">Sleep per night (hours)<input type="number" name="sleep" min="3" max="10" step="0.5" value="'+S.sleep+'"><small>Used in the 24-hour budget so a 14-hour plan shows whether it still fits.</small></label>'+
     syncBlock()+'<div class="actions"><button type="button" class="btn danger" data-act="reset-arm">Erase all data</button><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save</button></div></form>','#sf-exam');
 }
 function saveSettings(form){
   var fd=new FormData(form),mn=clamp(+fd.get('min')||12,1,14),mx=clamp(+fd.get('max')||14,1,16);
   if(mx<mn)mx=mn;
-  state.settings={exam:String(fd.get('exam')||DEFAULTS.exam),min:mn,max:mx,sleep:clamp(+fd.get('sleep')||6.5,3,10),cap:clamp(+fd.get('cap')||0,0,14)};capC=null;tierC=new Map();
+  var tmv=function(k,def){var v=String(fd.get(k)||'');if(!/^\d{1,2}:\d{2}$/.test(v))return def;var q=v.split(':').map(Number);return q[0]*60+q[1]};
+  var ds=tmv('ds',360),de=tmv('de',1380),pa=tmv('pa',360),pb=tmv('pb',660),qa=tmv('qa',0),qb=tmv('qb',0);
+  if(de<=ds+240){ds=360;de=1380}
+  if(pb<=pa){pa=360;pb=660}
+  if(qb<=qa){qa=0;qb=0}
+  state.settings={exam:String(fd.get('exam')||DEFAULTS.exam),min:mn,max:mx,sleep:clamp(+fd.get('sleep')||6.5,3,10),cap:clamp(+fd.get('cap')||0,0,14),ds:ds,de:de,pa:pa,pb:pb,qa:qa,qb:qb};capC=null;tierC=new Map();
   persist();closeOv();render();
 }
 
@@ -2391,6 +2593,14 @@ document.addEventListener('click',function(e){
     case 'xm-hide':ui.hideXm=true;renderBankParts(['top']);break;
     case 'xm-snooze':{var xw=examWindow();if(!xw)break;var xl=bank().filter(function(t){return !snoozed(t)&&'PCM'.indexOf(t.kind)>=0}),xto=addDays(xw.e,1);mutate(function(){xl.forEach(function(t){t.sn=xto})},'Snoozed '+xl.length+' JEE item'+(xl.length>1?'s':'')+' until '+shortDate(xto));break}
     case 'clean-up':openTriage(bank().filter(function(t){return !snoozed(t)&&ageOf(t)>=7}).map(function(t){return t.id}),'clean',[],'Clean up the bank','These have waited a week or more. If you have not needed them by now, they are probably not urgent. Keep, snooze or drop each one.');break;
+    case 'plan-open':openPlan(el.dataset.date||null);break;
+    case 'pl-add':{var pq=$('#pl-quick'),last=ui.pl.rows[ui.pl.rows.length-1]||{};ui.pl.rows.push({title:pq?pq.value.trim():'',k:last.k||'P',type:last.type==='Analysis'?'Theory':last.type||'Theory',dur:last.dur||60,pr:last.pr||1});if(pq)pq.value='';$('#pl-rows').innerHTML=ui.pl.rows.map(plRowHTML).join('');plSummary();var lr=document.querySelectorAll('#pl-rows .pl-t');if(lr.length&&!(pq&&pq.value))lr[lr.length-1].focus();break}
+    case 'pl-del':ui.pl.rows.splice(+el.dataset.i,1);$('#pl-rows').innerHTML=ui.pl.rows.map(plRowHTML).join('');plSummary();break;
+    case 'pl-day':{var nd=addDays(TODAY,+el.dataset.v);ui.pl.date=nd;ui.pl.meals=!onDay(nd).some(function(t){return t.kind==='R'});ui.pl.rearr=false;renderPlan(false);break}
+    case 'pl-prev':plPreview();break;
+    case 'pl-back':ui.pl.stage='edit';renderPlan(false);break;
+    case 'pl-apply':plApply();break;
+    case 'pk-learn':{var bh=bestHours();if(bh){var sfm=$('#sf');sfm.pa.value=tm(bh.a);sfm.pb.value=tm(bh.b)}break}
     case 'log-form':{var lid=ui.overlay&&ui.overlay.id;closeOv();if(lid)openLog(lid);break}
     case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){if(ut.log&&ut.log.e&&ut.log.s!=null){ut.dur=ut.log.e;ut.start=ut.log.s}ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
@@ -2453,6 +2663,7 @@ document.addEventListener('submit',function(e){
   else if(e.target.id==='af')authDo('signin');
   else if(e.target.id==='lf')saveLog(e.target);
   else if(e.target.id==='tr')applyTriage(e.target);
+  else if(e.target.id==='pl'){var pqf=$('#pl-quick');if(pqf&&pqf.value.trim()&&document.activeElement===pqf){document.querySelector('[data-act=pl-add]').click()}else plPreview()}
   else if(e.target.id==='qb'){
     var fd=new FormData(e.target),kind=fd.get('kind')||'P',title=String(fd.get('title')||'').trim();
     if(!title)return;
@@ -2478,6 +2689,16 @@ document.addEventListener('change',function(e){
     fr.onload=function(){var ta=$('#imp-text');if(ta){ta.value=String(fr.result||'');renderImportPreview()}};
     fr.readAsText(t.files[0]);
   }
+  if(t.dataset&&t.dataset.pl&&ui.pl){
+    var row=ui.pl.rows[+t.closest('.pl-row').dataset.i],f=t.dataset.pl;
+    row[f]=f==='dur'||f==='pr'?+t.value:t.value;
+    if(f==='k'){if(t.value==='A'){row.type='Analysis';row.pr=1}else if(row.type==='Analysis'){row.type='Theory'};$('#pl-rows').innerHTML=ui.pl.rows.map(plRowHTML).join('')}
+    plSummary();return;
+  }
+  if(t.dataset&&t.dataset.plb&&ui.pl){if(t.checked){var sl=document.querySelector('[data-plbp="'+t.dataset.plb+'"]');ui.pl.bank[t.dataset.plb]=sl?+sl.value:1}else delete ui.pl.bank[t.dataset.plb];plSummary();return}
+  if(t.dataset&&t.dataset.plbp&&ui.pl){if(ui.pl.bank[t.dataset.plbp]!=null)ui.pl.bank[t.dataset.plbp]=+t.value;plSummary();return}
+  if(t.dataset&&t.dataset.plo&&ui.pl){ui.pl[t.dataset.plo]=t.checked;plSummary();return}
+  if(t.id==='pl-date'&&ui.pl){if(t.value&&t.value>=TODAY){ui.pl.date=t.value;ui.pl.meals=!onDay(t.value).some(function(x){return x.kind==='R'});ui.pl.rearr=false;renderPlan(false)}return}
   if(t.dataset&&t.dataset.bsel){if(t.checked)ui.bsel[t.dataset.bsel]=1;else delete ui.bsel[t.dataset.bsel];renderBankParts(['body']);return}
   if(t.dataset&&t.dataset.bk){ui.bk[t.dataset.bk]=t.value;saveBk();renderBankParts(['chips','body']);return}
   if(t.id==='tf-bank'){['#tf-date','#tf-start'].forEach(function(q){var i=$(q);if(i)i.disabled=t.checked})}
@@ -2500,6 +2721,7 @@ document.addEventListener('input',function(e){
       tot.value=any?String(sum):'';
     }
   }
+  if(t.dataset&&t.dataset.pl==='title'&&ui.pl){var rw=ui.pl.rows[+t.closest('.pl-row').dataset.i];if(rw)rw.title=t.value;return}
   if(t.id==='bk-q'){ui.bk.q=t.value;renderBankParts(['body']);return}
   if(t.id==='imp-text'){clearTimeout(impT);impT=setTimeout(renderImportPreview,150)}
 });

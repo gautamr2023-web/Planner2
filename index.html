@@ -453,6 +453,98 @@ pre.ex{margin:0 0 8px;padding:10px;background:var(--surface);border:1px solid va
   .tt td.e{display:none}
   .tt td.act{order:3;flex:0 0 100%;display:flex;gap:8px;justify-content:flex-start;margin-top:6px}
 }
+/* ---------- motion: everything here is transform / opacity based and switched off by prefers-reduced-motion ---------- */
+:root{--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+@property --d{syntax:'<number>';inherits:false;initial-value:0}
+@property --p{syntax:'<number>';inherits:false;initial-value:0}
+@keyframes fxrise{from{opacity:0;transform:translateY(10px)}}
+@keyframes fxfade{from{opacity:0}}
+@keyframes fxfwd{from{opacity:0;transform:translateX(14px)}}
+@keyframes fxback{from{opacity:0;transform:translateX(-14px)}}
+@keyframes fxsheet{from{opacity:0;transform:translate(-50%,-46%) scale(.95)}}
+@keyframes fxsheetout{to{opacity:0;transform:translate(-50%,-48%) scale(.97)}}
+@keyframes fxscrimout{to{opacity:0}}
+@keyframes fxpop{0%{transform:scale(1)}35%{transform:scale(1.4)}100%{transform:scale(1)}}
+@keyframes fxdraw{from{stroke-dashoffset:14}}
+@keyframes fxflash{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+@keyframes fxring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ink) 38%,transparent)}100%{box-shadow:0 0 0 9px transparent}}
+@keyframes fxbump{40%{transform:scale(1.2);color:var(--ok)}}
+@keyframes fxtoast{from{opacity:0;transform:translateY(16px) scale(.96)}}
+@keyframes fxtoastout{to{opacity:0;transform:translateY(10px)}}
+@keyframes fxwipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes fxbub{from{--d:0;--p:0}}
+@keyframes fxblink{50%{opacity:.25}}
+@keyframes fxglow{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--ok) 35%,transparent),var(--shadow)}}
+@keyframes fxcheer{0%{opacity:0;transform:translate(-50%,-22px) scale(.9)}12%{opacity:1;transform:translate(-50%,0) scale(1)}86%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-10px) scale(.98)}}
+
+/* views and the day panel */
+.fx-in{animation:fxfade .3s var(--ease) backwards}
+.fx-in.fx-fwd{animation-name:fxfwd}
+.fx-in.fx-back{animation-name:fxback}
+.fx-in.fx-up{animation-name:fxrise}
+.fx-in .cell{animation:fxrise .42s var(--ease) backwards;animation-delay:calc(var(--i,0)*14ms)}
+.fx-in .tb,.fx-in .card,.fx-in .bk-row,.fx-in .tt tbody tr,.fx-in .dcol,.fx-in .srow,.fx-in .rvs>*,.fx-swap .ps{animation:fxrise .4s var(--ease) backwards;animation-delay:calc(var(--i,0)*26ms)}
+.fx-in .splitbar,.fx-in .legend{animation:fxwipe .7s var(--ease) .12s backwards}
+.fx-swap .bud,.fx-swap .ldbar{animation:fxwipe .7s var(--ease) .18s backwards}
+.fx-swap .bub i{animation:fxbub .8s var(--ease) .12s backwards}
+#panel.fx-swap{animation:fxfade .25s var(--ease) backwards;overflow:hidden}
+.fx-boot #top,.fx-boot #banner,.fx-boot #controls{animation:fxrise .55s var(--ease) backwards}
+.fx-boot #controls{animation-delay:.08s}
+
+/* sliding tab highlight */
+#controls .seg{position:relative}
+#controls .seg button{position:relative;z-index:1;transition:color .25s}
+#controls .seg button[aria-pressed="true"]{background:transparent}
+.seg-th{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ink);z-index:0;pointer-events:none}
+
+/* press and hover feedback */
+.btn,.fchip,.ib,.count,.mvb,.link{transition:background-color .15s,border-color .15s,color .15s,box-shadow .2s,transform .18s var(--ease)}
+.btn:not(:disabled):active,.fchip:active,.ib:active,.count:active,.mvb:active{transform:scale(.95)}
+.cell{transition:background-color .15s,transform .18s var(--ease)}
+.cell:active{transform:scale(.97)}
+.chk{transition:background-color .18s,border-color .18s,opacity .18s,transform .18s var(--ease)}
+.chk:active{transform:scale(.85)}
+.chk svg{transition:opacity .15s}
+.tb{transition:box-shadow .2s}
+.blk.row{transition:transform .18s var(--ease),box-shadow .2s}
+@media (hover:hover){
+  .btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(18,22,30,.12)}
+  .btn:not(:disabled):active{transform:scale(.96)}
+  .tb:hover{box-shadow:0 4px 14px rgba(18,22,30,.16)}
+  .tb.dragging-now:hover{box-shadow:var(--shadow)}
+  .blk.row:hover{transform:translateX(2px)}
+  .chk:hover{opacity:1;transform:scale(1.12)}
+  .chk:active{transform:scale(.85)}
+  .ib:hover svg{transform:rotate(60deg)}
+}
+.ib svg{transition:transform .5s var(--ease)}
+
+/* done */
+.chk.pop{animation:fxpop .55s var(--spring)}
+.chk.pop svg path{stroke-dasharray:14;animation:fxdraw .35s .08s ease-out backwards}
+.blk.fx-done{animation:fxflash .85s ease-out}
+.bump{display:inline-block;animation:fxbump .55s var(--spring)}
+.cheer{position:fixed;left:50%;top:18px;z-index:70;background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:999px;font-weight:700;box-shadow:var(--shadow);pointer-events:none;animation:fxcheer 2.9s var(--ease) forwards}
+
+/* overlays, toast, timer */
+#ov .scrim{animation:fxfade .2s ease-out backwards}
+#ov .sheet{animation:fxsheet .3s var(--ease) backwards}
+#ov.again .scrim,#ov.again .sheet{animation:none}
+#ov.out{pointer-events:none}
+#ov.out .scrim{animation:fxscrimout .17s ease-in forwards}
+#ov.out .sheet{animation:fxsheetout .17s ease-in forwards}
+#ov .pl-pv,#ov .tri-row{animation:fxrise .34s var(--ease) backwards;animation-delay:calc(.08s + var(--i,0)*28ms)}
+.toast{animation:fxtoast .35s var(--spring) backwards}
+.toast.out{animation:fxtoastout .22s ease-in forwards}
+.tmr.enter{animation:fxtoast .45s var(--spring) backwards}
+.tmr.run .tmi b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:8px;vertical-align:middle;animation:fxblink 1.6s ease-in-out infinite}
+.tmr.up{animation:fxglow 1.6s ease-in-out infinite}
+
+/* things that are quietly alive */
+.now::before{animation:fxring 2.2s ease-out infinite}
+.cell.today .dn{animation:fxring 2.8s ease-out infinite}
+.save.busy i{animation:fxblink .9s ease-in-out infinite}
+.plot .ln{stroke-linecap:round}
 @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 </style>
 </head>
@@ -639,7 +731,7 @@ function findSlot(date,d,from,exId){
 /* persistence: localStorage always, account db when available */
 var dbDoc=null,saveT=0,dirty=false,busy=false,saveState='local';
 var SAVE_TXT={local:'Saved on this device only',signedout:'Not signed in · tap to sync',ready:'Syncs to your account',saving:'Saving…',synced:'Saved to your account',error:'Saved on this device · sync will retry'};
-function saveHTML(){var c=saveState==='synced'||saveState==='ready'?' ok':saveState==='error'?' err':'';
+function saveHTML(){var c=saveState==='synced'||saveState==='ready'?' ok':saveState==='error'?' err':saveState==='saving'?' busy':'';
   if(sb)return '<button type="button" class="save link" id="save" data-act="auth"><i></i>'+SAVE_TXT[saveState]+'</button>';
   return '<span class="save'+c+'" id="save"><i></i>'+SAVE_TXT[saveState]+'</span>'}
 function setSave(s){saveState=s;var el=$('#save');if(el)el.outerHTML=saveHTML()}
@@ -967,7 +1059,7 @@ function renderBanner(){
     h+='<div class="banner miss"><span><b>'+lp.length+' task'+(lp.length>1?'s':'')+'</b> today ran past '+(lp.length>1?'their':'its')+' time and '+(lp.length>1?'are':'is')+' not ticked ('+hh(lm)+'). Tick what you finished. Sort the rest out.</span><button class="btn sm pri" data-act="triage-lapsed">Sort them out</button><button class="btn sm" data-act="lapsed-bank">All to backlog</button><button class="btn sm" data-act="lapsed-hide">Hide</button></div>'}
   if(dow(TODAY)===6&&!ui.hideReview&&ui.view!=='review')h+='<div class="banner"><span><b>It is Sunday.</b> Look back at the week and plan the next one.</span><button class="btn sm pri" data-act="review-open">Open weekly review</button><button class="btn sm" data-act="review-hide">Hide</button></div>';
   if(has)h+='<div class="banner"><span>A sample plan is loaded so you can see how the planner works. Your own tasks will sit next to it.</span><button class="btn sm" data-act="clear-samples">Clear samples</button><button class="btn sm" data-act="keep-samples">Keep and edit</button></div>';
-  el.hidden=!h;el.innerHTML=h;
+  el.hidden=!h;el.innerHTML=h;FX.banner(el,h);
 }
 function periodLabel(){
   var x=parse(ui.sel);
@@ -1674,8 +1766,8 @@ function renderTimer(){
   document.body.classList.toggle('has-timer',!!timer);
   if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
   var paused=timer.paused!=null;
-  el.hidden=false;
-  el.innerHTML='<div class="tmr'+(timer.fired?' up':'')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
+  var was=!el.hidden;el.hidden=false;
+  el.innerHTML='<div class="tmr'+(timer.fired?' up':paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
     (timer.capped?'<p class="tmn">Ends at '+clock(timer.slotEnd)+' so it does not run into the next task. This session is '+dur(Math.round(timer.total/60000))+' of the '+dur(Math.round(timer.planned/60000))+' planned. Anything unfinished can go to the backlog.</p>':'')+'<div class="acts">'+
     (timer.fired?'<button class="btn sm pri" data-act="timer-done">'+(timer.capped?'Log it':'Mark done')+'</button><button class="btn sm" data-act="timer-add" data-m="10">+10 min</button>':
       '<button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm" data-act="timer-add" data-m="5">+5 min</button><button class="btn sm pri" data-act="timer-done">Done</button>')+
@@ -1772,10 +1864,12 @@ function renderPanel(){
 }
 function render(){
   var tv=ui.view==='tests'||ui.view==='review'||ui.view==='bank';
+  FX.before();
   renderTop();renderBanner();renderControls();
   $('#panel').hidden=tv;$('.layout').classList.toggle('nopanel',tv);
   renderSummary();renderCal();
   if(!tv)renderPanel();
+  FX.after();
 }
 
 /* ---------- toast ---------- */
@@ -1783,18 +1877,23 @@ var toastT=0;
 function toast(msg,undo,altLabel,altFn){
   ui.undo=undo||null;ui.alt=altFn||null;
   $('#toast').innerHTML='<div class="toast"><span>'+esc(msg)+'</span>'+(undo?'<button data-act="undo">Undo</button>':'')+(altFn?'<button data-act="toast-alt">'+esc(altLabel)+'</button>':'')+'</div>';
-  clearTimeout(toastT);toastT=setTimeout(function(){$('#toast').innerHTML='';ui.undo=null},6500);
+  clearTimeout(toastT);toastT=setTimeout(function(){ui.undo=null;var t=$('#toast .toast');if(t&&!FX.off()){t.classList.add('out');setTimeout(function(){if($('#toast .toast')===t)$('#toast').innerHTML=''},230)}else $('#toast').innerHTML=''},6500);
 }
 
 /* ---------- overlays ---------- */
 var lastFocus=null;
+var ovT=0;
 function openOv(html,focusSel){
   lastFocus=document.activeElement;
-  $('#ov').innerHTML='<div class="scrim" data-act="close-ov"></div>'+html;document.body.classList.add('ovopen');
+  var ov=$('#ov');clearTimeout(ovT);ov.classList.remove('out');ov.classList.toggle('again',document.body.classList.contains('ovopen'));
+  ov.innerHTML='<div class="scrim" data-act="close-ov"></div>'+html;document.body.classList.add('ovopen');FX.ovIn(ov);
   var f=focusSel&&$(focusSel);if(f)f.focus();
 }
 function closeOv(){
-  $('#ov').innerHTML='';ui.overlay=null;document.body.classList.remove('ovopen');
+  var ov=$('#ov');ui.overlay=null;document.body.classList.remove('ovopen');
+  clearTimeout(ovT);
+  if(ov.firstChild&&!FX.off()){ov.classList.add('out');ovT=setTimeout(function(){ov.innerHTML='';ov.classList.remove('out','again')},180)}
+  else{ov.innerHTML='';ov.classList.remove('out','again')}
   if(lastFocus&&document.contains(lastFocus)&&lastFocus.focus)lastFocus.focus();
 }
 function typeOptions(kind,sel){return TYPES[kind].map(function(t){return '<option'+(t===sel?' selected':'')+'>'+t+'</option>'}).join('')}
@@ -2077,8 +2176,8 @@ function drawChart(host,cfg){
   cfg.series.forEach(function(s){
     var pairs=[];
     pts.forEach(function(p,i){var v=p.v[s.key];if(v!=null)pairs.push([xAt(i),yAt(v),v])});
-    if(pairs.length>1)el('path',{'class':'ln '+s.cls,d:pairs.map(function(q,j){return (j?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)}).join(' ')},svg);
-    pairs.forEach(function(q,j){if(n<=20||j===pairs.length-1)el('circle',{'class':'mk '+s.cls,cx:q[0],cy:q[1],r:5},svg)});
+    if(pairs.length>1){var lnp=el('path',{'class':'ln '+s.cls,d:pairs.map(function(q,j){return (j?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)}).join(' ')},svg);FX.line(lnp)}
+    pairs.forEach(function(q,j){if(n<=20||j===pairs.length-1)FX.dot(el('circle',{'class':'mk '+s.cls,cx:q[0],cy:q[1],r:5},svg),j,pairs.length)});
     if(pairs.length){
       var q=pairs[pairs.length-1],ok=usedY.every(function(u){return Math.abs(u-q[1])>=13});
       if(ok){usedY.push(q[1]);el('text',{'class':'lbl',x:q[0]+11,y:q[1]+4},svg).textContent=y.lab(q[2])}
@@ -2801,6 +2900,206 @@ function endDrag(e,cancel){
 }
 document.addEventListener('pointerup',function(e){endDrag(e,false)});
 document.addEventListener('pointercancel',function(e){endDrag(e,true)});
+
+/* ---------- motion: plays only when something really changed, never on every re-render ---------- */
+var FX=(function(){
+  var mq=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):null;
+  var EASE='cubic-bezier(.22,1,.36,1)',SPRING='cubic-bezier(.34,1.56,.64,1)';
+  function off(){return !!(mq&&mq.matches)||typeof Element.prototype.animate!=='function'}
+  function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+  var ROOTS=['#top','#summary','#cal','#panel'];
+  var prev={key:null,sel:null,pk:null,today:null},snap=null,segPrev=null,bsig='',allDone=null,doneMap=null,first=true;
+
+  function play(el,cls,ms){
+    if(!el)return;
+    el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);
+    clearTimeout(el['_fx'+cls]);el['_fx'+cls]=setTimeout(function(){el.classList.remove(cls)},ms);
+  }
+  function vkey(){
+    var v=ui.view;
+    return v+'|'+(v==='month'?ui.sel.slice(0,7):(v==='week'||v==='review')?startOfWeek(ui.sel):v==='day'?ui.sel:'');
+  }
+  function stagger(root){
+    $$('.cell',root).forEach(function(e,i){e.style.setProperty('--i',(i/7|0)+i%7)});
+    ['.tb','.card','.bk-row','.tt tbody tr','.dcol','.srow','.rvs>*','.ps'].forEach(function(s){
+      $$(s,root).forEach(function(e,i){e.style.setProperty('--i',Math.min(i,10))});
+    });
+  }
+
+  /* what the screen looked like before a render, so the render can glide to the new state */
+  function grab(sel){
+    var r=document.querySelector(sel),o={r:{},w:[],d:[],t:[]};
+    if(!r)return o;
+    $$('.tb[data-id],.blk[data-drag]',r).forEach(function(e){var b=e.getBoundingClientRect();o.r[e.dataset.id||e.dataset.drag]=[b.left,b.top]});
+    o.w=$$('.ldbar i,.bud i,.meter i,.splitbar i',r).map(function(e){return e.style.width});
+    o.d=$$('.bub i',r).map(function(e){return [e.style.getPropertyValue('--d'),e.style.getPropertyValue('--p')]});
+    o.t=$$('.stat b,.gl b,.budl b,.count b',r).map(function(e){return e.textContent});
+    return o;
+  }
+  function before(){
+    if(off()){snap=null;return}
+    snap={};ROOTS.forEach(function(r){snap[r]=grab(r)});
+  }
+  function morph(sel,o){
+    var r=document.querySelector(sel);if(!r||!o)return;
+    $$('.tb[data-id],.blk[data-drag]',r).forEach(function(e){
+      var old=o.r[e.dataset.id||e.dataset.drag],b=e.getBoundingClientRect();
+      if(old){
+        var dx=old[0]-b.left,dy=old[1]-b.top;
+        if(Math.abs(dx)>2||Math.abs(dy)>2)e.animate([{transform:'translate('+dx+'px,'+dy+'px)'},{transform:'none'}],{duration:380,easing:EASE});
+      }else if(!first)e.animate([{opacity:0,transform:'scale(.94) translateY(8px)'},{opacity:1,transform:'none'}],{duration:340,easing:SPRING});
+    });
+    var bars=$$('.ldbar i,.bud i,.meter i,.splitbar i',r),ch=[];
+    if(bars.length&&bars.length===o.w.length){
+      bars.forEach(function(e,i){var b=e.style.width;if(o.w[i]&&o.w[i]!==b){ch.push([e,b]);e.style.transition='none';e.style.width=o.w[i]}});
+      if(ch.length){void r.offsetWidth;ch.forEach(function(c){c[0].style.transition='width .6s '+EASE;c[0].style.width=c[1]})}
+    }
+    var bu=$$('.bub i',r),cb=[];
+    if(bu.length&&bu.length===o.d.length){
+      bu.forEach(function(e,i){
+        var d=e.style.getPropertyValue('--d'),p=e.style.getPropertyValue('--p');
+        if(o.d[i][0]!==d||o.d[i][1]!==p){cb.push([e,d,p]);e.style.transition='none';e.style.setProperty('--d',o.d[i][0]);e.style.setProperty('--p',o.d[i][1])}
+      });
+      if(cb.length){void r.offsetWidth;cb.forEach(function(c){c[0].style.transition='--d .6s '+EASE+',--p .6s '+EASE;c[0].style.setProperty('--d',c[1]);c[0].style.setProperty('--p',c[2])})}
+    }
+    var tx=$$('.stat b,.gl b,.budl b,.count b',r);
+    if(tx.length===o.t.length)tx.forEach(function(e,i){if(o.t[i]!==e.textContent)play(e,'bump',700)});
+  }
+
+  /* sliding highlight behind the view tabs */
+  function placeSeg(animate){
+    var seg=document.querySelector('#controls .seg');if(!seg)return;
+    var th=seg.querySelector('.seg-th');
+    if(!th){th=document.createElement('i');th.className='seg-th';th.setAttribute('aria-hidden','true');seg.insertBefore(th,seg.firstChild)}
+    var b=seg.querySelector('[aria-pressed="true"]');if(!b)return;
+    var x=b.offsetLeft,w=b.offsetWidth;
+    th.style.width=w+'px';th.style.transform='translateX('+x+'px)';
+    if(animate&&segPrev&&!off()&&(segPrev.x!==x||segPrev.w!==w))
+      th.animate([{transform:'translateX('+segPrev.x+'px)',width:segPrev.w+'px'},{transform:'translateX('+x+'px)',width:w+'px'}],{duration:340,easing:EASE});
+    segPrev={x:x,w:w};
+  }
+  window.addEventListener('resize',function(){placeSeg(false)});
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){placeSeg(false)});
+
+  /* confetti */
+  var cv=null,cx=null,parts=[],raf=0;
+  function size(){var d=Math.min(2,window.devicePixelRatio||1);cv.width=innerWidth*d;cv.height=innerHeight*d;cx=cv.getContext('2d');cx.setTransform(d,0,0,d,0,0)}
+  function burst(x,y,n,power){
+    if(off())return;
+    if(!cv){cv=document.createElement('canvas');cv.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:90';cv.setAttribute('aria-hidden','true');document.body.appendChild(cv);size()}
+    var cs=getComputedStyle(document.documentElement),cols=['--s-p','--s-c','--s-m','--ok','--ink-2'].map(function(v){return cs.getPropertyValue(v).trim()||'#888'});
+    for(var i=0;i<n;i++){
+      var a=-Math.PI/2+(Math.random()-.5)*Math.PI*1.2,v=(3+Math.random()*5)*power;
+      parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:2+Math.random()*3,rot:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:0,max:50+Math.random()*30});
+    }
+    if(!raf)raf=requestAnimationFrame(step);
+  }
+  function step(){
+    raf=0;if(!cv)return;
+    cx.clearRect(0,0,innerWidth,innerHeight);
+    parts=parts.filter(function(p){return p.life<p.max});
+    parts.forEach(function(p){
+      p.life++;p.vy+=.22;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;
+      cx.globalAlpha=Math.min(1,(p.max-p.life)/18);cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillStyle=p.c;cx.fillRect(-p.r,-p.r/2,p.r*2,p.r);cx.restore();
+    });
+    if(parts.length)raf=requestAnimationFrame(step);else{cv.remove();cv=null}
+  }
+  window.addEventListener('resize',function(){if(cv)size()});
+  function cheer(){
+    var d=document.createElement('div');d.className='cheer';d.setAttribute('role','status');d.textContent='Day complete. Great work!';
+    document.body.appendChild(d);setTimeout(function(){d.remove()},3000);
+    burst(innerWidth*.22,innerHeight*.92,55,1.9);burst(innerWidth*.78,innerHeight*.92,55,1.9);burst(innerWidth/2,innerHeight*.45,36,1.3);
+  }
+
+  /* the exam countdown counts up when the page opens */
+  function countUp(){
+    var b=document.querySelector('#top .count b'),n=b?parseInt(b.textContent,10):NaN;
+    if(!(n>0)||off())return;
+    var t0=0;
+    (function f(t){
+      if(!t0)t0=t;var k=Math.min(1,(t-t0)/900),e=1-Math.pow(1-k,3),el=document.querySelector('#top .count b');
+      if(el)el.textContent=k<1?Math.round(n*e):n;
+      if(k<1)requestAnimationFrame(f);
+    })(performance.now?performance.now():0);
+  }
+
+  function dayAll(){
+    var l=onDay(TODAY).filter(function(t){return t.kind!=='R'});
+    return l.length>0&&l.every(function(t){return t.done});
+  }
+
+  function after(){
+    var s=snap;snap=null;
+    var vk=vkey(),pk=ui.sel+'|'+(ui.view==='day'?'d':'o'),changed=prev.key!==vk,pchg=prev.pk!==pk;
+    var cal=document.querySelector('#cal'),sm=document.querySelector('#summary'),pn=document.querySelector('#panel');
+    placeSeg(true);
+    if(!off()){
+      if(first){document.body.classList.add('fx-boot');setTimeout(function(){document.body.classList.remove('fx-boot')},1200);countUp()}
+      if(changed&&cal){
+        var dir=prev.key&&prev.key.split('|')[0]===ui.view?(ui.sel>prev.sel?'fx-fwd':'fx-back'):'fx-up';
+        cal.classList.remove('fx-fwd','fx-back','fx-up');cal.classList.add(dir);
+        stagger(cal);play(cal,'fx-in',1100);
+        if(sm&&!sm.hidden){sm.classList.remove('fx-fwd','fx-back','fx-up');sm.classList.add(dir);play(sm,'fx-in',900)}
+      }
+      if(pchg&&pn&&!pn.hidden){stagger(pn);play(pn,'fx-swap',900)}
+      if(!changed&&ui.view==='month'&&prev.sel!==ui.sel){
+        var sc=document.querySelector('.cell.sel');
+        if(sc)sc.animate([{outlineOffset:'-10px',outlineColor:'transparent'},{outlineOffset:'-2px'}],{duration:300,easing:EASE});
+      }
+      if(s){
+        var el={'#top':true,'#summary':!changed,'#cal':!changed,'#panel':!pchg};
+        ROOTS.forEach(function(r){if(el[r])morph(r,s[r])});
+      }
+    }
+    /* ticks: pop, flash, a few sparks; a whole day finished earns the big one */
+    var cur={},newly=[];
+    state.tasks.forEach(function(t){cur[t.id]=!!t.done;if(doneMap&&t.done&&doneMap[t.id]===false)newly.push(t.id)});
+    doneMap=cur;
+    if(!off()&&newly.length){
+      var origin=null;
+      newly.slice(0,6).forEach(function(id){
+        $$('.chk.on[data-id="'+id+'"]').forEach(function(c){
+          play(c,'pop',700);
+          var blk=c.closest('.blk');
+          if(blk){play(blk,'fx-done',900);blk.animate([{opacity:1},{opacity:.6}],{duration:450,easing:'ease-out'})}
+          var b=c.getBoundingClientRect();
+          if(!origin&&b.width&&b.bottom>0&&b.top<innerHeight)origin=b;
+        });
+      });
+      if(origin&&newly.length<=3)burst(origin.left+origin.width/2,origin.top+origin.height/2,14,1);
+    }
+    var all=dayAll();
+    if(!first&&prev.today===TODAY&&all&&allDone===false&&newly.length&&!off())cheer();
+    allDone=all;
+    prev={key:vk,sel:ui.sel,pk:pk,today:TODAY};
+    first=false;
+  }
+
+  function banner(el,h){
+    if(!off()&&!first&&h&&h!==bsig&&el.firstElementChild)
+      el.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'none'}],{duration:340,easing:EASE});
+    bsig=h;
+  }
+  function ovIn(ov){
+    $$('.pl-pv,.tri-row',ov).forEach(function(e,i){e.style.setProperty('--i',Math.min(i,12))});
+  }
+  return {
+    off:off,burst:burst,banner:banner,ovIn:ovIn,
+    line:function(path){
+      if(off())return;
+      path.setAttribute('pathLength','1');path.style.strokeDasharray='1';
+      path.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:900,easing:EASE,fill:'backwards'});
+    },
+    dot:function(c,j,n){
+      if(off())return c;
+      c.style.transformBox='fill-box';c.style.transformOrigin='center';
+      c.animate([{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1)'}],{duration:320,delay:350+j*Math.min(60,520/Math.max(1,n)),easing:SPRING,fill:'backwards'});
+      return c;
+    },
+    before:function(){try{before()}catch(e){snap=null}},
+    after:function(){try{after()}catch(e){snap=null;first=false}}
+  };
+})();
 
 /* ---------- start ---------- */
 var hadLocal=false;

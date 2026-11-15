@@ -1803,14 +1803,16 @@ function pipTick(){
 }
 function vidDraw(){
   if(!pipC||!timer)return;
-  var x=pipC.getContext('2d'),r=tmRem(),w=pipC.width,h=pipC.height;
-  x.fillStyle=timer.fired?'#0F3D2B':'#12161E';x.fillRect(0,0,w,h);
-  x.fillStyle='#AAB2C2';x.font='600 12px system-ui,sans-serif';x.textBaseline='top';
-  var t=timer.title;while(t.length>3&&x.measureText(t).width>w-20)t=t.slice(0,-2);x.fillText(t===timer.title?t:t+'…',10,9);
-  x.fillStyle='#E8EBF2';x.font='700 38px system-ui,sans-serif';x.fillText(timer.fired?'Time is up':tmFmt(r),10,30);
-  if(timer.paused!=null){x.fillStyle='#AAB2C2';x.font='600 12px system-ui,sans-serif';x.fillText('Paused',w-52,9)}
-  try{if(pipV&&navigator.mediaSession)navigator.mediaSession.playbackState=timer.paused!=null?'paused':'playing'}catch(e){}
-  x.fillStyle='#2B3240';x.fillRect(10,h-12,w-20,3);x.fillStyle='#E8EBF2';x.fillRect(10,h-12,(w-20)*Math.min(1,1-r/timer.total),3);
+  var x=pipC.getContext('2d'),r=tmRem(),k=pipC.width/250,paused=timer.paused!=null,pr=Math.max(0,Math.min(1,1-r/timer.total));
+  x.setTransform(k,0,0,k,0,0);
+  x.fillStyle=timer.fired?'#0F3D2B':'#12161E';x.fillRect(0,0,250,92);
+  x.textBaseline='top';x.fillStyle='#AAB2C2';x.font='600 12px system-ui,sans-serif';
+  var t=timer.title;while(t.length>3&&x.measureText(t).width>170)t=t.slice(0,-2);x.fillText(t===timer.title?t:t+'…',14,12);
+  x.fillStyle='#E8EBF2';x.font=(timer.fired?'700 28px':'700 36px')+' system-ui,sans-serif';x.fillText(timer.fired?'Time is up':tmFmt(r),14,36);
+  x.lineWidth=5;x.lineCap='round';x.beginPath();x.arc(213,46,19,0,Math.PI*2);x.strokeStyle='#2B3240';x.stroke();
+  if(pr>0){x.beginPath();x.arc(213,46,19,-Math.PI/2,-Math.PI/2+Math.PI*2*pr);x.strokeStyle=timer.fired?'#46C58B':'#E8EBF2';x.stroke()}
+  if(paused){x.fillStyle='#E8EBF2';x.fillRect(207,38,4,16);x.fillRect(215,38,4,16)}
+  try{if(pipV&&navigator.mediaSession)navigator.mediaSession.playbackState=paused?'paused':'playing'}catch(e){}
 }
 function floatOpen(mode){
   if(!timer){toast('Start a timer first.');return}
@@ -1835,7 +1837,7 @@ function floatOpen(mode){
   }
   if(document.pictureInPictureEnabled&&HTMLCanvasElement.prototype.captureStream){
     if(document.pictureInPictureElement)return;
-    pipC=document.createElement('canvas');pipC.width=250;pipC.height=92;
+    pipC=document.createElement('canvas');pipC.width=750;pipC.height=276;
     pipV=document.createElement('video');pipV.muted=true;pipV.playsInline=true;pipV.srcObject=pipC.captureStream(5);
     vidDraw();
     var ms=navigator.mediaSession,H=function(n,f){try{ms.setActionHandler(n,f)}catch(e){}};

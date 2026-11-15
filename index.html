@@ -1728,6 +1728,7 @@ function startTimer(id){
   }
   timer={id:id,title:t.title,total:span,planned:t.dur*60000,end:nowMs+span,paused:null,fired:false,capped:capped,slotEnd:slotEnd};
   saveTimer();renderTimer();
+  try{if(localStorage.getItem(PIPK)==='1')floatOpen()}catch(e){}
 }
 function stopTimer(){timer=null;saveTimer();renderTimer()}
 function endTimer(mode){
@@ -1764,16 +1765,83 @@ function renderTimer(){
   var el=$('#timer');if(!el)return;
   clearInterval(tmI);tmI=0;
   document.body.classList.toggle('has-timer',!!timer);
-  if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
+  if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;pipRender();if(pipV&&document.pictureInPictureElement)document.exitPictureInPicture().catch(function(){});return}
   var paused=timer.paused!=null;
   var was=!el.hidden;el.hidden=false;
   el.innerHTML='<div class="tmr'+(timer.fired?' up':paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
     (timer.capped?'<p class="tmn">Ends at '+clock(timer.slotEnd)+' so it does not run into the next task. This session is '+dur(Math.round(timer.total/60000))+' of the '+dur(Math.round(timer.planned/60000))+' planned. Anything unfinished can go to the backlog.</p>':'')+'<div class="acts">'+
     (timer.fired?'<button class="btn sm pri" data-act="timer-done">'+(timer.capped?'Log it':'Mark done')+'</button><button class="btn sm" data-act="timer-add" data-m="10">+10 min</button>':
       '<button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm" data-act="timer-add" data-m="5">+5 min</button><button class="btn sm pri" data-act="timer-done">Done</button>')+
-    '<button class="btn sm" data-act="timer-stop">Stop</button></div></div>';
-  tmTick();
+    '<button class="btn sm" data-act="timer-stop">Stop</button><button class="btn sm" data-act="timer-float" title="Keep the timer on top of other windows and websites">Pop out</button></div></div>';
+  tmTick();pipRender();
   if(!paused&&!timer.fired)tmI=setInterval(tmTick,1000);
+}
+
+/* floating timer: a small always-on-top window (Chrome/Edge) or video picture-in-picture (other browsers) */
+var PIPK='jee-planner-float',pipW=null,pipI=0,pipShut=false,pipV=null,pipC=null,pipVI=0;
+var PIPCSS='body{margin:0;padding:12px 14px;height:100vh;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;background:#12161E;color:#E8EBF2;font:13px system-ui,-apple-system,Segoe UI,sans-serif}body.up{background:#0F3D2B}.t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.c{font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}.b{height:4px;background:#2B3240;border-radius:2px;overflow:hidden}.b i{display:block;height:100%;width:0;background:#E8EBF2;transition:width .9s linear}.a{display:flex;gap:6px}.a button{flex:1;border:1px solid #4A5366;background:#1C212B;color:inherit;border-radius:6px;padding:7px 4px;font:600 12px system-ui,sans-serif;cursor:pointer}.a button:hover{background:#2B3240}.a .p{background:#E8EBF2;color:#12161E;border-color:#E8EBF2}';
+function pipProxy(a,m){var b=document.createElement('button');b.dataset.act=a;if(m)b.dataset.m=m;b.hidden=true;document.body.appendChild(b);b.click();b.remove()}
+function pipRender(){
+  if(!pipW||pipW.closed)return;
+  if(!timer){pipShut=true;try{pipW.close()}catch(e){}return}
+  var d=pipW.document,paused=timer.paused!=null;
+  d.body.className=timer.fired?'up':'';
+  d.body.innerHTML='<div class="t">'+esc(timer.title)+'</div><div class="c" id="pc"></div><div class="b"><i id="pf"></i></div><div class="a">'+
+    (timer.fired?'<button class="p" data-act="timer-done">'+(timer.capped?'Log it':'Mark done')+'</button><button data-act="timer-add" data-m="10">+10 min</button>':
+      '<button data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button data-act="timer-add" data-m="5">+5 min</button><button class="p" data-act="timer-done">Done</button>')+
+    '<button data-act="timer-stop">Stop</button></div>';
+  pipTick();
+}
+function pipTick(){
+  if(pipW&&!pipW.closed&&timer){
+    var r=tmRem(),c=pipW.document.getElementById('pc'),f=pipW.document.getElementById('pf');
+    if(c)c.textContent=timer.fired?'Time is up':tmFmt(r);
+    if(f)f.style.width=Math.min(100,(1-r/timer.total)*100)+'%';
+  }
+  if(pipV)vidDraw();
+}
+function vidDraw(){
+  if(!pipC||!timer)return;
+  var x=pipC.getContext('2d'),r=tmRem(),w=pipC.width,h=pipC.height;
+  x.fillStyle=timer.fired?'#0F3D2B':'#12161E';x.fillRect(0,0,w,h);
+  x.fillStyle='#E8EBF2';x.font='600 20px system-ui,sans-serif';x.textBaseline='top';
+  var t=timer.title;while(t.length>3&&x.measureText(t).width>w-32)t=t.slice(0,-2);x.fillText(t===timer.title?t:t+'…',16,16);
+  x.font='700 64px system-ui,sans-serif';x.fillText(timer.fired?'Time is up':tmFmt(r),16,52);
+  x.fillStyle='#2B3240';x.fillRect(16,h-24,w-32,5);x.fillStyle='#E8EBF2';x.fillRect(16,h-24,(w-32)*Math.min(1,1-r/timer.total),5);
+}
+function floatOpen(){
+  if(!timer){toast('Start a timer first.');return}
+  var fail=function(){toast('The floating timer works in Chrome, Edge, Safari and Firefox on a computer, opened from the planner website rather than inside another page.')};
+  if(window.documentPictureInPicture&&documentPictureInPicture.requestWindow){
+    if(pipW&&!pipW.closed){try{pipW.focus()}catch(e){}return}
+    documentPictureInPicture.requestWindow({width:330,height:175}).then(function(w){
+      pipW=w;pipShut=false;
+      var st=w.document.createElement('style');st.textContent=PIPCSS;w.document.head.appendChild(st);
+      w.document.title='Study timer';
+      w.document.addEventListener('click',function(e){
+        var b=e.target.closest('[data-act]');if(!b)return;
+        pipProxy(b.dataset.act,b.dataset.m);
+        if(b.dataset.act==='timer-done'||b.dataset.act==='timer-stop'){try{window.focus()}catch(x){}}
+      });
+      w.addEventListener('pagehide',function(){clearInterval(pipI);if(!pipShut){try{localStorage.removeItem(PIPK)}catch(e){}}pipW=null});
+      pipI=w.setInterval(function(){pipTick();tmTick()},1000);
+      try{localStorage.setItem(PIPK,'1')}catch(e){}
+      pipRender();
+    }).catch(fail);
+    return;
+  }
+  if(document.pictureInPictureEnabled&&HTMLCanvasElement.prototype.captureStream){
+    if(document.pictureInPictureElement){return}
+    pipC=document.createElement('canvas');pipC.width=360;pipC.height=170;
+    pipV=document.createElement('video');pipV.muted=true;pipV.playsInline=true;pipV.srcObject=pipC.captureStream(5);
+    vidDraw();
+    pipV.play().then(function(){return pipV.requestPictureInPicture()}).then(function(){
+      pipVI=setInterval(function(){vidDraw()},1000);
+      pipV.addEventListener('leavepictureinpicture',function(){clearInterval(pipVI);pipV=null;pipC=null});
+    }).catch(function(){clearInterval(pipVI);pipV=null;pipC=null;fail()});
+    return;
+  }
+  fail();
 }
 function nextTask(){
   var n=new Date(),nm=n.getHours()*60+n.getMinutes();
@@ -2709,6 +2777,7 @@ document.addEventListener('click',function(e){
     case 'timer-add':if(timer){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
     case 'timer-done':endTimer('done');break;
     case 'timer-stop':endTimer('stop');break;
+    case 'timer-float':floatOpen();break;
     case 'review-open':ui.view='review';ui.sel=TODAY;render();break;
     case 'review-hide':ui.hideReview=true;renderBanner();break;
     case 'rv-bank':{var wk=weekData(startOfWeek(ui.sel)).slipped;toBank(wk.map(function(t){return t.id}),'Moved '+wk.length+' unfinished tasks to the backlog');break}

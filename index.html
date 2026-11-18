@@ -2077,8 +2077,16 @@ function renderTestsView(){
   var rk=rankMode(res);
   var chart1='<section class="card"><header><h3>Marks<small>% of maximum marks</small></h3><div class="lgs" role="group" aria-label="Lines shown">'+legend+'</div></header><div class="plot" id="plot1" tabindex="0"></div></section>';
   var chart2='<section class="card"><header><h3>'+(rk==='pct'?'Percentile':'Rank')+'<small>'+(rk==='pct'?'Higher is better':'Lower is better. Batch sizes differ, so use percentile to compare.')+'</small></h3>'+
-    '<div class="seg" role="group" aria-label="Rank chart measure"><button data-act="rankmode" data-m="pct" aria-pressed="'+(rk==='pct')+'">Percentile</button><button data-act="rankmode" data-m="rank" aria-pressed="'+(rk==='rank')+'">Rank</button></div></header><div class="plot" id="plot2" tabindex="0"></div></section>';
+    '<div class="seg" role="group" aria-label="Rank chart measure"><button data-act="rankmode" data-m="pct" aria-pressed="'+(rk==='pct')+'">Percentile</button><button data-act="rankmode" data-m="rank" aria-pressed="'+(rk==='rank')+'">Rank</button></div></header><div class="plot" id="plot2" tabindex="0"></div>'+pctNote(res,rk)+'</section>';
   return stats+filters+chart1+chart2+testsTable(res);
+}
+/* tests that have a rank but cannot be turned into a percentile are left off the percentile chart, so say which ones and why */
+function pctNote(res,rk){
+  if(rk!=='pct')return '';
+  var miss=res.filter(function(t){var r=t.test.res;return r&&r.rank&&pctile(t)==null});
+  if(!miss.length)return '';
+  var nm=miss.slice(0,3).map(function(t){return esc(t.title)}).join(', ')+(miss.length>3?' and '+(miss.length-3)+' more':'');
+  return '<p class="hint">'+miss.length+(miss.length>1?' tests are':' test is')+' not on this chart because the rank has no batch size or percentile: '+nm+'. Edit the result and add the number of students (or the percentile) to include '+(miss.length>1?'them':'it')+'. Rank view shows '+(miss.length>1?'them all':'it')+'.</p>';
 }
 function rankMode(res){
   if(ui.rank!=='auto')return ui.rank;

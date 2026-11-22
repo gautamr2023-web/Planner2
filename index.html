@@ -1076,7 +1076,7 @@ function renderControls(){
   else if(ui.view==='tests')h+='<h2 class="th">Tests and results</h2><span class="sp"></span><button class="btn" data-act="import">Import schedule</button><button class="btn pri" data-act="add-test">+ Add test</button>';
   else h+='<div class="nav"><button class="ib" data-act="prev" aria-label="Previous">\u2039</button><h2>'+periodLabel()+'</h2><button class="ib" data-act="next" aria-label="Next">\u203a</button></div>'+
     '<button class="btn" data-act="today">Today</button><span class="sp"></span>'+
-    '<button class="btn pri" data-act="plan-open">Plan my day</button><button class="btn" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
+    '<button class="btn" data-act="free-open" title="Start a stopwatch without planning anything">Study now</button><button class="btn pri" data-act="plan-open">Plan my day</button><button class="btn" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
   $('#controls').innerHTML=h;
 }
 function renderSummary(){
@@ -1713,11 +1713,12 @@ function reviewHTML(){
 var TK='jee-planner-timer',timer=null,tmI=0,baseTitle=document.title,audio=null;
 var PLAY='<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.2v9.6L13 8z"/></svg>';
 function saveTimer(){try{if(timer)localStorage.setItem(TK,JSON.stringify(timer));else localStorage.removeItem(TK)}catch(e){}}
-function loadTimer(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');if(o&&o.id&&get(o.id)&&!get(o.id).done)timer=o}catch(e){}}
+function loadTimer(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');if(o&&(o.up||(o.id&&get(o.id)&&!get(o.id).done)))timer=o}catch(e){}}
 function tmRem(){return !timer?0:timer.paused!=null?timer.paused:Math.max(0,timer.end-Date.now())}
 function tmFmt(ms){var s=Math.ceil(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);s=s%60;return (h?h+':'+pad(m):m)+':'+pad(s)}
 function startTimer(id){
   var t=get(id);if(!t||t.done||t.kind==='R')return;
+  if(timer&&timer.up){toast('Finish the free study session first.');return}
   try{if(!audio&&window.AudioContext)audio=new AudioContext();if(audio&&audio.state==='suspended')audio.resume()}catch(e){}
   try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
   var n=new Date(),nowMs=n.getTime(),nm=n.getHours()*60+n.getMinutes()+n.getSeconds()/60,span=t.dur*60000,capped=false,slotEnd=null;
@@ -1732,6 +1733,7 @@ function startTimer(id){
 function stopTimer(){timer=null;saveTimer();renderTimer()}
 function endTimer(mode){
   if(!timer)return;
+  if(timer.up){openFree();return}
   var id=timer.id,t=get(id),studied=Math.round((timer.total-tmRem())/60000),planned=Math.round(timer.planned/60000);
   stopTimer();
   if(!t||t.done)return;
@@ -1744,12 +1746,71 @@ function endTimer(mode){
   if(studied<3){toast('Timer stopped. Under 3 minutes, so nothing was logged.');return}
   openLog(id,{m:studied,p:near25(pct)});
 }
+
+/* free study: a stopwatch for studying without a plan */
+function tmEl(){return !timer?0:timer.paused!=null?timer.paused:Math.max(0,Date.now()-timer.since)}
+function tmUp(ms){var s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);s=s%60;return (h?h+':'+pad(m):m)+':'+pad(s)}
+function startFree(k){
+  if(timer){toast(timer.up?'A free study session is already running.':'Finish the running timer first.');return}
+  k=k==='C'||k==='M'||k==='O'?k:'P';
+  var n=new Date();
+  timer={up:true,id:'',title:'Free study · '+SUBS[k],k:k,since:n.getTime(),startMin:n.getHours()*60+n.getMinutes(),date:iso(n),paused:null,total:0,end:0,fired:false};
+  saveTimer();renderTimer();
+}
+function openFreeStart(){
+  if(timer){toast(timer.up?'A free study session is already running.':'Finish the running timer first.');return}
+  ui.overlay={kind:'freestart'};
+  openOv('<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fsh"><h3 id="fsh">Study now</h3><p class="empty" style="margin:-4px 0 0">No plan needed. Pick a subject and the stopwatch starts. When you finish, the time is saved to today.</p><div class="opts">'+
+    ['P','C','M','O'].map(function(k){return '<button type="button" class="btn k-'+k+'" data-act="free-start" data-k="'+k+'"><span class="chip">'+k+'</span> '+(k==='O'?'Other subject':SUBS[k])+'</button>'}).join('')+
+    '</div><div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button></div></div>');
+}
+function openFree(){
+  if(!timer||!timer.up)return;
+  if(timer.paused==null){timer.paused=tmEl();saveTimer();renderTimer()}
+  var m=Math.min(720,Math.max(1,Math.round(timer.paused/60000))),k=timer.k||'P';
+  ui.overlay={kind:'free'};
+  var kinds=['P','C','M','O'].map(function(x){return '<label class="kopt k-'+x+'"><input type="radio" name="kind" value="'+x+'"'+(k===x?' checked':'')+'><span class="kb"><span class="chip">'+x+'</span>'+(x==='O'?'Other':SUBS[x])+'</span></label>'}).join('');
+  var fs=[1,2,3,4,5].map(function(x){return '<label class="kopt"><input type="radio" name="f" value="'+x+'"><span class="kb"><b>'+x+'</b> '+FOCUS[x-1]+'</span></label>'}).join('');
+  var plan=onDay(timer.date).filter(function(t){return !t.done&&t.kind!=='R'&&!t.test});
+  openOv('<form class="sheet" id="ff" novalidate role="dialog" aria-modal="true" aria-labelledby="ffh" autocomplete="off">'+
+    '<h3 id="ffh">Save this session</h3><p class="empty" style="margin:-4px 0 0"><b>'+tmUp(timer.paused)+'</b> studied, started at '+clock(timer.startMin)+'</p>'+
+    '<label class="f">What did you study? (optional)<input name="title" maxlength="80" placeholder="e.g. Rotational motion: 20 PYQs"></label>'+
+    '<fieldset class="kinds"><legend>Subject</legend>'+kinds+'</fieldset>'+
+    '<div class="grid2"><label class="f">Type<select name="type">'+STUDY_TYPES.map(function(t){return '<option>'+t+'</option>'}).join('')+'</select></label>'+
+    '<label class="f">Minutes studied<input type="number" id="ff-m" name="m" min="1" max="720" step="1" value="'+m+'"></label></div>'+
+    (plan.length?'<label class="f">Was this part of your plan?<select name="link"><option value="">No, a new session</option>'+plan.map(function(t){return '<option value="'+esc(t.id)+'">Count it as: '+esc(t.title)+' ('+dur(t.dur)+')</option>'}).join('')+'</select></label>':'')+
+    '<fieldset class="kinds"><legend>How focused were you? (optional)</legend>'+fs+'</fieldset>'+
+    (m>=720?'<p class="hint">This ran for 12 hours or more. Check the minutes.</p>':'')+
+    '<p class="err" hidden></p>'+
+    '<div class="actions"><button type="button" class="btn danger" data-act="free-discard">Discard</button><span class="sp"></span><button type="button" class="btn" data-act="free-keep">Keep going</button><button type="submit" class="btn pri">Save</button></div></form>');
+}
+function saveFree(form){
+  if(!timer||!timer.up)return closeOv();
+  var fd=new FormData(form),m=Math.round(+fd.get('m'));
+  if(isNaN(m)||m<1||m>720)return showErr(form,'Minutes must be between 1 and 720.','#ff-m');
+  var kind=fd.get('kind')||'P',type=fd.get('type')||'Theory',title=String(fd.get('title')||'').trim()||(SUBS[kind]+' study'),f=+fd.get('f')||0,link=String(fd.get('link')||'');
+  var date=timer.date,st0=timer.startMin;
+  closeOv();stopTimer();
+  var lt=link?get(link):null,lg={p:100,m:m};if(f)lg.f=f;
+  if(lt&&!lt.done){
+    lg.p=Math.min(100,Math.round(m/lt.dur*100));
+    mutate(function(){lt.done=true;lt.sample=false;lt.log=lg},'Logged '+dur(m)+' on “'+lt.title+'”.');
+    return;
+  }
+  var d5=Math.max(5,Math.ceil(m/5)*5);
+  mutate(function(){
+    var st=Math.max(T0,Math.min(st0,T1-d5));
+    if(onDay(date).some(function(x){return x.start!=null&&x.start<st+d5&&st<x.start+x.dur}))st=findSlot(date,d5,st);
+    state.tasks.push({id:uid(),title:title,kind:kind,type:type,date:date,start:st,dur:d5,done:true,sample:false,test:null,from:'',log:lg,u:0,pr:0,sn:''});
+  },'Saved '+dur(m)+' of '+SUBS[kind]+' to '+(date===TODAY?'today':shortDate(date))+'.');
+}
 function beep(){
   try{if(!audio)return;[0,.28,.56].forEach(function(d){var o=audio.createOscillator(),g=audio.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(audio.destination);o.start(audio.currentTime+d);o.stop(audio.currentTime+d+.18)})}catch(e){}
   try{if(navigator.vibrate)navigator.vibrate([200,100,200,100,200])}catch(e){}
 }
 function tmTick(){
   if(!timer){return}
+  if(timer.up){var e0=tmEl(),c0=$('#tm-clock');if(c0)c0.textContent=tmUp(e0);document.title=tmUp(e0)+' · '+timer.title;return}
   var tt=get(timer.id);if(!tt||tt.done||!tt.date){stopTimer();return}
   var r=tmRem(),c=$('#tm-clock'),f=$('#tm-fill');
   if(c)c.textContent=timer.fired?'Time is up':tmFmt(r);
@@ -1767,6 +1828,10 @@ function renderTimer(){
   if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
   var paused=timer.paused!=null;
   var was=!el.hidden;el.hidden=false;
+  if(timer.up){
+    el.innerHTML='<div class="tmr'+(paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><p class="tmn">Free study. No plan needed: finish to save this time to today.</p><div class="acts"><button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm pri" data-act="timer-done">Finish and save</button></div></div>';
+    tmTick();if(!paused)tmI=setInterval(tmTick,1000);return;
+  }
   el.innerHTML='<div class="tmr'+(timer.fired?' up':paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
     (timer.capped?'<p class="tmn">Ends at '+clock(timer.slotEnd)+' so it does not run into the next task. This session is '+dur(Math.round(timer.total/60000))+' of the '+dur(Math.round(timer.planned/60000))+' planned. Anything unfinished can go to the backlog.</p>':'')+'<div class="acts">'+
     (timer.fired?'<button class="btn sm pri" data-act="timer-done">'+(timer.capped?'Log it':'Mark done')+'</button><button class="btn sm" data-act="timer-add" data-m="10">+10 min</button>':
@@ -1821,6 +1886,7 @@ function renderPanel(){
     (st.rest?'<i class="rest" style="width:'+(st.rest/1440*100)+'%"></i>':'')+'<i class="sleep" style="width:'+(sleep/1440*100)+'%"></i></div>'+
     '<div class="budl num"><span>Study <b>'+hh(st.study)+'</b></span><span>Meals + breaks <b>'+hh(st.rest)+'</b></span><span>Sleep <b>'+hh(sleep)+'</b></span>'+
     '<span class="'+(free<0?'over':'')+'">'+(free<0?'Over by <b>'+hh(-free)+'</b>: something has to give':'Spare <b>'+hh(free)+'</b>')+'</span></div></div>';
+  if(d===TODAY&&!timer)h+='<div class="ps"><h4>Studying without a plan?</h4><div class="acts">'+['P','C','M','O'].map(function(k){return '<button class="btn sm fs-b k-'+k+'" data-act="free-start" data-k="'+k+'"><span class="chip">'+k+'</span>'+(k==='O'?'Other':SUBS[k])+'</button>'}).join('')+'</div><p class="hint" style="margin:6px 0 0">Starts a stopwatch. Finish to save the time to today.</p></div>';
   var nx=d===TODAY&&!timer?nextTask():null;
   if(nx)h+='<div class="ps"><button class="btn pri focus" data-act="timer-start" data-id="'+nx.id+'">'+PLAY+'<span>Start timer: '+esc(nx.title)+' · '+dur(nx.dur)+'</span></button></div>';
   if(d===TODAY&&onDay(d).some(movable))h+='<div class="ps"><div class="acts"><button class="btn sm" data-act="rescue">Rescue my day</button><button class="btn sm" data-act="close-day">Close the day</button></div><p class="hint" style="margin:6px 0 0">A bad morning? Rescue re-plans what is left at your real pace. At night, Close the day lets you decide on each unfinished task so nothing is dumped in the bank.</p></div>';
@@ -2713,9 +2779,13 @@ document.addEventListener('click',function(e){
     case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){if(ut.log&&ut.log.e&&ut.log.s!=null){ut.dur=ut.log.e;ut.start=ut.log.s}ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
     case 'timer-start-form':{var sid=ui.overlay&&ui.overlay.id;closeOv();if(sid)startTimer(sid);break}
-    case 'timer-pause':if(timer){timer.paused=tmRem();saveTimer();renderTimer()}break;
-    case 'timer-resume':if(timer&&timer.paused!=null){timer.end=Date.now()+timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
-    case 'timer-add':if(timer){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
+    case 'timer-pause':if(timer){timer.paused=timer.up?tmEl():tmRem();saveTimer();renderTimer()}break;
+    case 'timer-resume':if(timer&&timer.paused!=null){if(timer.up)timer.since=Date.now()-timer.paused;else timer.end=Date.now()+timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
+    case 'timer-add':if(timer&&!timer.up){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
+    case 'free-open':openFreeStart();break;
+    case 'free-start':closeOv();startFree(el.dataset.k);break;
+    case 'free-keep':closeOv();if(timer&&timer.up&&timer.paused!=null){timer.since=Date.now()-timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
+    case 'free-discard':closeOv();if(timer&&timer.up){stopTimer();toast('Session discarded.')}break;
     case 'timer-done':endTimer('done');break;
     case 'timer-stop':endTimer('stop');break;
     case 'review-open':ui.view='review';ui.sel=TODAY;render();break;
@@ -2770,6 +2840,7 @@ document.addEventListener('submit',function(e){
   else if(e.target.id==='imf')applyImport();
   else if(e.target.id==='af')authDo('signin');
   else if(e.target.id==='lf')saveLog(e.target);
+  else if(e.target.id==='ff')saveFree(e.target);
   else if(e.target.id==='tr')applyTriage(e.target);
   else if(e.target.id==='pl'){var pqf=$('#pl-quick');if(pqf&&pqf.value.trim()&&document.activeElement===pqf){document.querySelector('[data-act=pl-add]').click()}else plPreview()}
   else if(e.target.id==='qb'){

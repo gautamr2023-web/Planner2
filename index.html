@@ -706,7 +706,7 @@ function gapsOf(d){
   return out;
 }
 function dayStats(d){
-  var r={study:0,done:0,rest:0,gap:0,n:0,nd:0,sub:{P:0,C:0,M:0,T:0}};
+  var r={study:0,done:0,rest:0,gap:0,n:0,nd:0,sub:{P:0,C:0,M:0,O:0,T:0}};
   onDay(d).forEach(function(t){
     r.n++;if(t.done)r.nd++;
     if(t.kind==='R'){r.rest+=t.dur}else{r.study+=t.dur;r.sub[t.kind]+=t.dur;r.done+=eff(t)}
@@ -1086,7 +1086,7 @@ function renderSummary(){
   var dates=[],S=state.settings,i;
   if(ui.view==='week'){var a=startOfWeek(ui.sel);for(i=0;i<7;i++)dates.push(addDays(a,i))}
   else{var x=parse(ui.sel),dim=new Date(x.getFullYear(),x.getMonth()+1,0).getDate(),f=iso(new Date(x.getFullYear(),x.getMonth(),1));for(i=0;i<dim;i++)dates.push(addDays(f,i))}
-  var plan=0,done=0,inT=0,days=0,sub={P:0,C:0,M:0,T:0};
+  var plan=0,done=0,inT=0,days=0,sub={P:0,C:0,M:0,O:0,T:0};
   dates.forEach(function(d){
     var st=dayStats(d);plan+=st.study;done+=st.done;
     if(st.study){days++;if(st.study>=S.min*60&&st.study<=S.max*60)inT++}
@@ -1650,7 +1650,7 @@ function plApply(){
 }
 /* ---------- weekly review ---------- */
 function weekData(a){
-  var r={a:a,days:[],plan:0,done:0,sub:{P:{p:0,d:0},C:{p:0,d:0},M:{p:0,d:0},T:{p:0,d:0}},slipped:[],todo:[],tests:[],logs:[],hit:0},i;
+  var r={a:a,days:[],plan:0,done:0,sub:{P:{p:0,d:0},C:{p:0,d:0},M:{p:0,d:0},O:{p:0,d:0},T:{p:0,d:0}},slipped:[],todo:[],tests:[],logs:[],hit:0},i;
   for(i=0;i<7;i++){
     var d=addDays(a,i),p=0,dn=0;
     onDay(d).forEach(function(t){
@@ -1677,9 +1677,9 @@ function reviewHTML(){
     w.days.map(function(x,i){
       return '<div class="dcol'+(x.d===TODAY?' today':'')+'"><div class="dbar" style="--t:'+(mn/maxDay*100)+'%"><i class="pl" style="height:'+(x.p/maxDay*100)+'%"></i><i class="dn" style="height:'+(x.dn/maxDay*100)+'%"></i></div><b class="num">'+hh(x.dn)+'</b><small class="num">of '+hh(x.p)+'</small><span>'+DAYS[i]+' '+parse(x.d).getDate()+'</span></div>';
     }).join('')+'</div></div>';
-  var rows=['P','C','M','T'].map(function(k){
+  var rows=['P','C','M','O','T'].map(function(k){
     var q=w.sub[k];if(!q.p&&!q.d)return '';
-    var mxs=Math.max(w.sub.P.p,w.sub.C.p,w.sub.M.p,w.sub.T.p,1);
+    var mxs=Math.max(w.sub.P.p,w.sub.C.p,w.sub.M.p,w.sub.O.p,w.sub.T.p,1);
     return '<div class="srow k-'+k+'"><span class="sl">'+SUBS[k]+'</span><div class="sbar"><i class="pl" style="width:'+(q.p/mxs*100)+'%"></i><i class="dn" style="width:'+(q.d/mxs*100)+'%"></i></div><span class="sv num"><b>'+hh(q.d)+'</b> of '+hh(q.p)+' · '+(q.p?Math.round(q.d/q.p*100):0)+'%</span></div>';
   }).join('');
   var low=null;['P','C','M'].forEach(function(k){var q=w.sub[k];if(q.p>=60&&(!low||q.d/q.p<w.sub[low].d/w.sub[low].p))low=k});
@@ -1876,7 +1876,7 @@ function renderPanel(){
   var d=ui.sel,st=dayStats(d),S=state.settings,list=onDay(d),bk=bank().filter(function(t){return !snoozed(t)}),stat=loadStatus(st.study),toExam=dayDiff(d,S.exam);
   var sleep=S.sleep*60,free=1440-st.study-st.rest-sleep;
   var pills=(d===TODAY?'<span class="pill">Today</span>':'')+(toExam>0?'<span class="pill">'+toExam+' day'+(toExam>1?'s':'')+' to exam</span>':toExam===0?'<span class="pill ok">JEE Main</span>':'');
-  var seg=['P','C','M','T'].map(function(k){return st.sub[k]?'<i class="k-'+k+'" style="width:'+(st.sub[k]/1440*100)+'%" title="'+SUBS[k]+' '+hh(st.sub[k])+'"></i>':''}).join('');
+  var seg=['P','C','M','O','T'].map(function(k){return st.sub[k]?'<i class="k-'+k+'" style="width:'+(st.sub[k]/1440*100)+'%" title="'+SUBS[k]+' '+hh(st.sub[k])+'"></i>':''}).join('');
   var h='<div class="ps"><div class="ph"><div><h3>'+shortDate(d)+'</h3><div class="pills">'+pills+'</div></div>'+
     (ui.view!=='day'?'<button class="link" data-act="view" data-v="day">Open timeline</button>':'')+'</div>'+
     '<div class="gauge" style="margin-top:14px">'+bubbles(st.study,st.done,'',true)+'</div>'+

@@ -545,6 +545,119 @@ pre.ex{margin:0 0 8px;padding:10px;background:var(--surface);border:1px solid va
 .cell.today .dn{animation:fxring 2.8s ease-out infinite}
 .save.busy i{animation:fxblink .9s ease-in-out infinite}
 .plot .ln{stroke-linecap:round}
+/* ---------- insights ---------- */
+.rvtabs{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--surface);align-self:flex-start}
+.rvtabs button{border:0;background:none;padding:6px 14px;border-radius:7px;font-weight:600;font-size:13px;color:var(--ink-2)}
+.rvtabs button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.xinsh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.xinsh h2{margin:0;font-size:18px}
+.seg.sm button{padding:5px 11px;font-size:12px}
+.xitl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.xit{position:relative;display:flex;flex-direction:column;gap:3px;overflow:hidden;padding-bottom:30px}
+.xit .xil{font-size:12px;color:var(--ink-2);font-weight:600}
+.xit b{font-size:30px;line-height:1.1;font-weight:700}
+.xit b small{font-size:14px;color:var(--ink-3);font-weight:600}
+.xis{font-size:12px;color:var(--ink-2)}
+.xis.mut,.mut{color:var(--ink-3)}
+.xis.pos{color:var(--ok);font-weight:600}.xis.neg{color:var(--over);font-weight:600}
+.xspk{position:absolute;left:0;right:0;bottom:0;width:100%;height:30px;opacity:.9}
+.xig{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.xic header h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.xic header h3 small{font-size:12px;font-weight:500;color:var(--ink-3)}
+.xie{margin:6px 0;padding:18px 0}
+.xca{margin:10px 0 0;font-size:12px;color:var(--ink-3)}
+.xca b{color:var(--ink-2)}
+.xnts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.xnt{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:8px;background:var(--surface-2);border-left:4px solid var(--ink-3);font-size:13px}
+.xnt b{font-size:13.5px}.xnt span{color:var(--ink-2)}
+.xnt.good{border-left-color:var(--ok)}.xnt.warn{border-left-color:var(--over)}.xnt.info{border-left-color:var(--s-p)}
+.xdly{margin-top:4px}
+.xdds{position:relative;display:flex;align-items:stretch;gap:3px;height:190px;border-bottom:1px solid var(--line-strong)}
+.thin .xdds{gap:1px}
+.xdd{flex:1;min-width:0;display:flex;flex-direction:column-reverse;border-radius:2px 2px 0 0;overflow:hidden;opacity:.55;transition:opacity .15s}
+.xdd.hit,.xdd.today,.xdd:hover{opacity:1}
+.xdd.today{outline:1px solid var(--ink);outline-offset:1px}
+.xdd i{display:block;width:100%}
+.xtgl{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink-3);pointer-events:none}
+.xtgl em{position:absolute;right:0;top:-18px;font-size:11px;font-style:normal;color:var(--ink-3);background:var(--surface);padding:0 4px}
+.xmav{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.xmav path{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 2px var(--surface))}
+.xdax{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:5px}
+.xlg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--ink-2);align-items:center}
+.xlg span{display:inline-flex;align-items:center;gap:6px}
+.xlg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.xlg i.xln{height:0;border-top:2.4px solid var(--ink);width:16px;border-radius:0}
+.xlg i.xunr,.xqb i.xunr{background:repeating-linear-gradient(45deg,var(--line-strong) 0 3px,transparent 3px 6px)}
+.xqb{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px;margin-top:4px}
+.xqb i{display:block;min-width:2px;transition:filter .15s}.xqb i:hover{filter:brightness(1.12)}
+.xcc{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px;align-items:end;margin-top:4px}
+.xcc-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;outline-offset:2px;border-radius:6px;padding-top:14px}
+.xcc-c .xbw{display:flex;align-items:flex-end;justify-content:center;width:100%;height:120px;border-bottom:1px solid var(--line-strong)}
+.xcc-c .xbw i{display:block;width:72%;max-width:46px;height:var(--h);min-height:2px;background:var(--c);border-radius:5px 5px 0 0;transform-origin:bottom;animation:insgrow .7s var(--ease) backwards;animation-delay:calc(var(--i,0)*45ms);transition:filter .15s}
+.xcc-c:hover .xbw i,.xcc-c:focus-visible .xbw i{filter:brightness(1.12)}
+.xcc-c.none .xbw i{height:2px;background:var(--line)}
+.xcc-c .xcv{font-size:12px;font-weight:700;min-height:15px}
+.xcc-c .xcl{font-size:12px;color:var(--ink-2);font-weight:600}
+.xcc-c .xcs{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:4px;min-height:14px}
+.xcc-c.best .xbw i{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ok)}
+.xcc-c .xtag{position:absolute;top:-4px;font-size:10px;font-style:normal;font-weight:700;color:var(--on-sub);background:var(--ok);padding:1px 6px;border-radius:9px}
+.xfd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:baseline;border:1px solid var(--line-strong)}
+.xhb{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.xhr{display:grid;grid-template-columns:minmax(70px,26%) minmax(0,1fr) auto;align-items:center;gap:10px;font-size:13px;border-radius:6px;outline-offset:2px}
+.xhl{font-weight:600;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xhl .xdot{width:8px;height:8px;border-radius:50%;flex:none}
+.xht{height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden;display:block}
+.xht i{display:block;height:100%;width:var(--w);background:var(--c);border-radius:6px;transform-origin:left;animation:inswide .7s var(--ease) backwards;animation-delay:calc(var(--i,0)*55ms)}
+.xhv{font-size:12px;color:var(--ink-2);white-space:nowrap}.xhv b{color:var(--ink)}
+.xpvr{display:flex;flex-direction:column;gap:7px}
+.xpr{display:grid;grid-template-columns:minmax(90px,34%) minmax(0,1fr) auto;align-items:center;gap:10px;font-size:13px;border-radius:6px;outline-offset:2px}
+.xpt{position:relative;height:12px;background:var(--surface-2);border-radius:6px;display:block}
+.xpt::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;border-left:2px solid var(--ink-3)}
+.xpt b{position:absolute;top:0;bottom:0;border-radius:6px;animation:inswide .7s var(--ease) backwards}
+.xpax{display:grid;grid-template-columns:minmax(90px,34%) 1fr auto;gap:10px;font-size:11px;color:var(--ink-3)}
+.xpax span:nth-child(1){grid-column:2;display:flex;justify-content:space-between}
+.xpax{display:flex;justify-content:space-between;padding-left:calc(34% + 10px);padding-right:0}
+.xhmx{display:flex;gap:8px;align-items:stretch;overflow-x:auto;padding-bottom:2px}
+.xhmd{display:grid;grid-template-rows:repeat(7,1fr);gap:3px;padding-top:17px;font-size:10px;color:var(--ink-3);align-items:center}
+.xhmw{flex:1;min-width:0;max-width:calc(var(--w)*38px)}
+.xhml{display:grid;grid-template-columns:repeat(var(--w),minmax(0,1fr));gap:3px;height:17px;font-size:10.5px;color:var(--ink-3)}
+.xhml span{white-space:nowrap;overflow:visible}
+.xhm{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,auto);grid-template-columns:repeat(var(--w),minmax(0,1fr));gap:3px}
+.xhc{display:block;aspect-ratio:1;border-radius:3px;background:var(--surface-2);border:1px solid var(--line)}
+.xlg .xhc{width:12px;height:12px;aspect-ratio:auto}
+.xhc.off{visibility:hidden}
+.xhc.l1{background:color-mix(in srgb,var(--ok) 22%,var(--surface-2));border-color:transparent}
+.xhc.l2{background:color-mix(in srgb,var(--ok) 45%,var(--surface-2));border-color:transparent}
+.xhc.l3{background:color-mix(in srgb,var(--ok) 70%,var(--surface-2));border-color:transparent}
+.xhc.l4{background:var(--ok);border-color:transparent}
+.xhc.today{outline:1.5px solid var(--ink);outline-offset:1px}
+.tipf{position:fixed;z-index:60;max-width:240px}
+.tipf div{color:var(--ink-2);padding:1px 0}
+.tipt{display:block;color:var(--ink);margin-bottom:3px}
+@keyframes insgrow{from{transform:scaleY(0)}}
+@keyframes inswide{from{transform:scaleX(0)}}
+@media (max-width:900px){.xitl{grid-template-columns:repeat(2,minmax(0,1fr))}.xig,.xnts{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.xhr{grid-template-columns:minmax(60px,30%) minmax(0,1fr)}.xhr .xhv{grid-column:1/-1;margin-top:-4px}.xpr{grid-template-columns:minmax(0,1fr) auto}.xpr .xpt{grid-column:1/-1;order:3}.xpax{padding-left:0}.xit b{font-size:26px}.xcc{gap:3px}}
+.k-B{--k:var(--ink-3)}
+body.has-ex{padding-bottom:230px}
+.tmr.ex .tmn{min-height:18px}
+.xsec{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:0 0 8px}
+.xsb{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:2px 6px;padding:6px 8px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface-2);text-align:left;font-weight:600;font-size:12.5px;min-height:38px;transition:background .15s,border-color .15s}
+.xsb b{grid-column:1/-1;font-size:15px}
+.xsb[aria-pressed=true]{background:var(--k);color:var(--on-sub);border-color:var(--k)}
+.xsb[aria-pressed=true] .chip{background:var(--on-sub);color:var(--k)}
+.xtime .xtl2{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.xtr{display:grid;grid-template-columns:minmax(110px,26%) minmax(0,1fr) 54px;align-items:center;gap:10px;font-size:13px}
+.xtl{min-width:0}.xtl b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xtl small{color:var(--ink-3);font-size:11.5px}
+.xtt{display:block;height:16px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.xtb{display:flex;height:100%;gap:1px}
+.xtb i{display:block;min-width:2px}.xtb i:first-child{border-radius:5px 0 0 5px}
+.xtv{text-align:right;font-weight:700}
+.xlg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 4px;font-size:12px;color:var(--ink-2)}
+.xlg span{display:inline-flex;align-items:center;gap:6px}.xlg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.xh4{margin:14px 0 6px;font-size:13px}
+.xca{margin:10px 0 0;font-size:12.5px;color:var(--ink-2)}.xca b{color:var(--ink)}
+@media (max-width:520px){.xtr{grid-template-columns:minmax(0,1fr) 48px}.xtr .xtt{grid-column:1/-1;order:3}body.has-ex{padding-bottom:300px}}
 @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 </style>
 </head>
@@ -637,7 +750,7 @@ var tplStudy=function(k){return TEMPLATES[k].items.reduce(function(a,i){return a
 var LS='jee-planner-v1';
 var state={v:1,updated:0,su:0,del:{},settings:Object.assign({},DEFAULTS),tasks:[]};
 var idx=new Map();
-var ui={bf:'all',hideMissed:false,hideReview:false,view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
+var ui={rv:'week',ir:30,bf:'all',hideMissed:false,hideReview:false,view:'month',sel:TODAY,menu:null,confirm:null,overlay:null,undo:null,tlKey:null,tf:{kind:'all',range:0},series:{tot:true,P:false,C:false,M:false},rank:'auto'};
 var pack=function(t){return [t.id,t.title,t.kind,t.type,t.date,t.start,t.dur,t.done?1:0,t.sample?1:0,t.test||0,t.from||'',t.log||0,t.u||0,t.pr||0,t.sn||'']};
 var unpack=function(a){return {id:a[0],title:a[1],kind:a[2],type:a[3],date:a[4]||'',start:a[5],dur:a[6],done:!!a[7],sample:!!a[8],test:a[9]&&typeof a[9]==='object'?a[9]:null,from:typeof a[10]==='string'?a[10]:'',log:a[11]&&typeof a[11]==='object'?a[11]:null,u:+a[12]||0,pr:[1,2,3].indexOf(+a[13])>=0?+a[13]:0,sn:typeof a[14]==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(a[14])?a[14]:''}};
 var fixTest=function(t){
@@ -1074,6 +1187,7 @@ function renderControls(){
   var h='<div class="seg" role="group" aria-label="View">'+seg+'</div>';
   if(ui.view==='bank')h+='<h2 class="th">Backlog bank</h2><span class="sp"></span><button class="btn" data-act="clean-up">Clean up</button><button class="btn" data-act="plan-open">Plan from the bank</button><button class="btn pri" data-act="add-bank">+ Add item</button>';
   else if(ui.view==='tests')h+='<h2 class="th">Tests and results</h2><span class="sp"></span><button class="btn" data-act="import">Import schedule</button><button class="btn pri" data-act="add-test">+ Add test</button>';
+  else if(ui.view==='review'&&ui.rv==='insights')h+='<h2 class="th">Review</h2><span class="sp"></span><button class="btn" data-act="free-open">Study now</button><button class="btn pri" data-act="plan-open">Plan my day</button>';
   else h+='<div class="nav"><button class="ib" data-act="prev" aria-label="Previous">\u2039</button><h2>'+periodLabel()+'</h2><button class="ib" data-act="next" aria-label="Next">\u203a</button></div>'+
     '<button class="btn" data-act="today">Today</button><span class="sp"></span>'+
     '<button class="btn" data-act="free-open" title="Start a stopwatch without planning anything">Study now</button><button class="btn pri" data-act="plan-open">Plan my day</button><button class="btn" data-act="add" data-date="'+ui.sel+'">+ Add task</button>';
@@ -1666,11 +1780,11 @@ function weekData(a){
   }
   return r;
 }
-function reviewHTML(){
+function reviewWeekHTML(){
   var a=startOfWeek(ui.sel),w=weekData(a),S=state.settings,mn=S.min*60;
   var pctDone=w.plan?Math.round(w.done/w.plan*100):0;
   var maxDay=Math.max.apply(null,w.days.map(function(x){return Math.max(x.p,x.dn)}).concat([mn,60]));
-  var h='<div class="rv"><div class="card"><header><h3>Week at a glance<small>'+periodLabel()+'</small></h3></header><div class="rvs">'+
+  var h='<div class="rv">'+rvTabs()+'<div class="card"><header><h3>Week at a glance<small>'+periodLabel()+'</small></h3></header><div class="rvs">'+
     '<div><b class="num">'+hh(w.plan)+'</b><span>Planned</span></div><div><b class="num">'+hh(w.done)+'</b><span>Done</span></div>'+
     '<div><b class="num">'+pctDone+'%</b><span>Of the plan finished</span></div><div><b class="num">'+w.hit+' / 7</b><span>Days with '+S.min+'h+ done</span></div></div></div>';
   h+='<div class="card"><header><h3>Hours by day<small>filled = done, outline = planned, line = '+S.min+'h target</small></h3></header><div class="dcols" role="img" aria-label="Planned and done hours for each day of the week">'+
@@ -1709,6 +1823,387 @@ function reviewHTML(){
   return h;
 }
 
+
+/* ---------- insights: what your logs really say ---------- */
+var BKT=[[300,420,'5a'],[420,540,'7a'],[540,660,'9a'],[660,780,'11a'],[780,900,'1p'],[900,1020,'3p'],[1020,1140,'5p'],[1140,1260,'7p'],[1260,1440,'9p']];
+var LENB=[[0,30,'≤30m'],[31,60,'31–60m'],[61,90,'61–90m'],[91,120,'91–120m'],[121,9999,'2h+']];
+var INS_R=[[14,'14 days'],[30,'30 days'],[90,'90 days'],[0,'All']];
+var WHYHINT={'Distracted':'Try shorter blocks with a 5-minute break between them.','Tired':'Put hard subjects earlier in the day and protect your sleep.','Hard topic':'Add a doubt-clearing block before the practice block.','Phone':'Keep the phone out of reach during blocks.','Ran out of time':'Plan these tasks longer: see Plan vs reality below.'};
+var kcol=function(k){return k==='P'?'var(--s-p)':k==='C'?'var(--s-c)':k==='M'?'var(--s-m)':k==='T'?'var(--s-t)':'var(--ink-3)'};
+var ftone=function(v){return v>=3?'color-mix(in srgb,var(--ok) '+Math.round(30+(v-3)/2*70)+'%,var(--surface-2))':'color-mix(in srgb,var(--over) '+Math.round(30+(3-v)/2*70)+'%,var(--surface-2))'};
+var fmtF=function(v){return v==null?'–':(Math.round(v*10)/10).toFixed(1)};
+var fmtH=function(m){return hh(Math.round(m))};
+function dayDone(d){return onDay(d).reduce(function(a,t){return a+(t.kind==='R'?0:eff(t))},0)}
+function grp(list,fn){
+  var o={};
+  list.forEach(function(s){
+    var k=fn(s);if(k==null)return;
+    var g=o[k]||(o[k]={n:0,m:0,fs:0,fn:0,p:0,pn:0,fm:0});
+    g.n++;g.m+=s.m;if(s.f){g.fs+=s.f;g.fn++;g.fm+=s.m}g.p+=s.p;g.pn++;
+  });
+  return o;
+}
+var gfav=function(g){return g&&g.fn?g.fs/g.fn:null};
+function insData(n){
+  var i,all=state.tasks.filter(function(t){return t.done&&t.kind!=='R'&&t.date&&t.date<=TODAY});
+  if(!n){var f0=all.reduce(function(a,t){return t.date<a?t.date:a},TODAY);n=clamp(dayDiff(f0,TODAY)+1,7,365)}
+  var start=addDays(TODAY,-(n-1)),pst=addDays(start,-n),tg=state.settings.min*60;
+  var D={n:n,start:start,tg:tg,days:[],ses:[],tot:0,plan:0,ptot:0,pfs:[],byD:{}};
+  for(i=0;i<n;i++){var d=addDays(start,i);D.days.push(D.byD[d]={d:d,k:{P:0,C:0,M:0,O:0,T:0},tot:0,plan:0,fs:[]})}
+  state.tasks.forEach(function(t){
+    if(t.kind==='R'||!t.date||t.date>TODAY)return;
+    var r=D.byD[t.date],m;
+    if(!r){
+      if(t.date>=pst&&t.date<start&&t.done){D.ptot+=eff(t);if(t.log&&t.log.f)D.pfs.push(t.log.f)}
+      return;
+    }
+    r.plan+=t.dur;D.plan+=t.dur;
+    if(!t.done)return;
+    m=eff(t);r.k[t.kind]=(r.k[t.kind]||0)+m;r.tot+=m;D.tot+=m;
+    if(t.test)return;
+    var l=t.log||null,s={t:t,m:m,k:t.kind,type:t.type,st:t.start,dur:t.dur,d:t.date,f:l&&l.f||0,p:l&&l.p!=null?l.p:100,lm:l&&l.m!=null?l.m:null,w:l&&l.w||[],q:l&&l.q||null,n:l&&l.n||''};
+    D.ses.push(s);if(s.f)r.fs.push(s.f);
+  });
+  D.fses=D.ses.filter(function(s){return s.f});
+  D.favg=D.fses.length?mean(D.fses.map(function(s){return s.f})):null;
+  D.pfavg=D.pfs.length?mean(D.pfs):null;
+  D.rm=D.fses.reduce(function(a,s){return a+s.m},0);
+  D.qm=D.fses.filter(function(s){return s.f>=4}).reduce(function(a,s){return a+s.m},0);
+  var G0=function(l){return grp(l,function(){return 1})[1]||{n:0,m:0,fs:0,fn:0,p:0,pn:0,fm:0}};
+  D.tb=BKT.map(function(b,i){
+    var g=G0(D.ses.filter(function(s){return s.st>=b[0]&&(s.st<b[1]||i===BKT.length-1)}));
+    return {s:b[0],e:b[1],lab:b[2],g:g,fav:gfav(g)};
+  });
+  D.lb=LENB.map(function(b){
+    var g=G0(D.ses.filter(function(s){return s.dur>=b[0]&&s.dur<=b[1]}));
+    return {lab:b[2],g:g,fav:gfav(g)};
+  });
+  D.bs=grp(D.ses,function(s){return s.k});
+  D.bt=grp(D.ses,function(s){return s.type});
+  return D;
+}
+function streakNow(tg){var c=0,d=TODAY;if(dayDone(d)<tg)d=addDays(d,-1);while(c<400&&dayDone(d)>=tg){c++;d=addDays(d,-1)}return c}
+function streakBest(D){var b=0,c=0;D.days.forEach(function(x){if(x.tot>=D.tg){c++;if(c>b)b=c}else c=0});return b}
+
+/* small builders */
+function colChart(items,aria){
+  return '<div class="xcc" role="group" aria-label="'+esc(aria)+'">'+items.map(function(it,i){
+    return '<div class="xcc-c'+(it.best?' best':'')+(it.h==null?' none':'')+'" style="--i:'+i+'" data-tip="'+esc(it.tip||'')+'" tabindex="0"><span class="xcv num">'+(it.v||'')+'</span><span class="xbw"><i style="--h:'+Math.round((it.h||0)*100)+'%;--c:'+(it.col||'var(--ink)')+'"></i></span><span class="xcl">'+it.lab+'</span>'+(it.sub?'<span class="xcs num">'+it.sub+'</span>':'')+(it.best?'<em class="xtag">Best</em>':'')+'</div>';
+  }).join('')+'</div>';
+}
+function hRows(rows){
+  return '<div class="xhb">'+rows.map(function(r,i){
+    return '<div class="xhr" style="--i:'+i+'" data-tip="'+esc(r.tip||'')+'" tabindex="0"><span class="xhl">'+r.lab+'</span><span class="xht"><i style="--w:'+Math.round(clamp(r.w,0,1)*100)+'%;--c:'+r.col+'"></i></span><span class="xhv num">'+r.val+'</span></div>';
+  }).join('')+'</div>';
+}
+function icard(title,small,body,cls){return '<section class="card xic '+(cls||'')+'"><header><h3>'+title+(small?'<small>'+small+'</small>':'')+'</h3></header>'+body+'</section>'}
+function iempty(msg){return '<p class="empty xie">'+msg+'</p>'}
+var NEEDF='Rate your focus in the “How did it go?” sheet after a session and this fills in.';
+function spark(vals,col,lo,hi){
+  var n=vals.length,pts=[];
+  vals.forEach(function(v,i){if(v==null)return;pts.push((i/(n-1||1)*100).toFixed(1)+','+(29-(v-lo)/((hi-lo)||1)*27).toFixed(1))});
+  if(pts.length<2)return '';
+  return '<svg class="xspk" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+function delta(cur,prev,unit,pctMode){
+  if(prev==null||cur==null||(pctMode&&!prev))return '<span class="xis mut">no earlier period to compare</span>';
+  var d=pctMode?(cur-prev)/prev*100:cur-prev;
+  if(Math.abs(d)<(pctMode?1:0.05))return '<span class="xis mut">same as the period before</span>';
+  return '<span class="xis '+(d>0?'pos':'neg')+'">'+(d>0?'▲ +':'▼ ')+(pctMode?Math.round(d)+'%':fmtF(d))+unit+' vs the period before</span>';
+}
+
+/* the coach: plain sentences from the numbers */
+function insNotes(D){
+  var out=[],add=function(t,h,p){out.push({t:t,h:h,p:p})},nf=D.fses.length,i;
+  if(!D.ses.length&&!D.tot){add('info','Nothing finished in this period','Mark tasks done or run the timer and the charts fill in.');return out}
+  if(nf<5)add('info','Rate your focus to unlock the sharper insights',nf+' of '+D.ses.length+' finished sessions have a focus rating. The “How did it go?” sheet takes five seconds and powers the time-of-day, subject and blocker charts.');
+  var tb=D.tb.filter(function(b){return b.g.fn>=2});
+  if(tb.length>=2){
+    var bt=tb.reduce(function(a,b){return b.fav>a.fav?b:a}),wt=tb.reduce(function(a,b){return b.fav<a.fav?b:a});
+    if(bt.fav-wt.fav>=0.5)add('good','Your sharpest window is '+range(bt.s,bt.e),'Average focus '+fmtF(bt.fav)+' / 5 over '+bt.g.fn+' sessions, against '+fmtF(wt.fav)+' at '+range(wt.s,wt.e)+'. Put your hardest subject in that window and revision or notes in the dips.');
+    else add('info','Your focus is steady through the day','Between '+fmtF(wt.fav)+' and '+fmtF(bt.fav)+' / 5 in every time window, so the time of day is not what is holding you back.');
+  }
+  var sg=['P','C','M'].filter(function(k){return D.bs[k]&&D.bs[k].fn>=2});
+  if(sg.length>=2){
+    var hi=sg.reduce(function(a,b){return gfav(D.bs[b])>gfav(D.bs[a])?b:a}),lo=sg.reduce(function(a,b){return gfav(D.bs[b])<gfav(D.bs[a])?b:a});
+    if(gfav(D.bs[hi])-gfav(D.bs[lo])>=0.5)add('warn',SUBS[lo]+' is where your focus drops','Focus '+fmtF(gfav(D.bs[lo]))+' / 5 against '+fmtF(gfav(D.bs[hi]))+' for '+SUBS[hi]+'. Try shorter blocks, or move it into your sharp window.');
+  }
+  var lb=D.lb.filter(function(b){return b.g.fn>=2});
+  if(lb.length>=2&&lb[lb.length-1].fav+0.6<=lb[0].fav)add('warn','Focus fades in long sessions','Sessions of '+lb[0].lab+' average '+fmtF(lb[0].fav)+' / 5; '+lb[lb.length-1].lab+' sessions drop to '+fmtF(lb[lb.length-1].fav)+'. Split long blocks in two with a break.');
+  var why={},wn=0;D.ses.forEach(function(s){if(s.w.length)wn++;s.w.forEach(function(x){why[x]=(why[x]||0)+1})});
+  var wk=Object.keys(why).sort(function(a,b){return why[b]-why[a]});
+  if(wk.length)add('warn',wk[0]+' is your biggest blocker','Named in '+why[wk[0]]+' of '+D.ses.length+' sessions ('+Math.round(why[wk[0]]/D.ses.length*100)+'%). '+(WHYHINT[wk[0]]||''));
+  var ev=grp(D.ses.filter(function(s){return s.p>=100&&s.lm!=null}),function(s){return s.k+'|'+s.type}),best=null;
+  Object.keys(ev).forEach(function(k){
+    var g=ev[k],pl=0;D.ses.forEach(function(s){if(s.p>=100&&s.lm!=null&&s.k+'|'+s.type===k)pl+=s.dur});
+    if(g.n<3||!pl)return;
+    var r=g.m/pl,dv=Math.abs(r-1);
+    if(dv>=0.2&&(!best||dv>best.dv))best={k:k,r:r,dv:dv,n:g.n};
+  });
+  if(best){var bk=best.k.split('|');add(best.r>1?'warn':'info',SUBS[bk[0]]+' '+bk[1]+' takes '+(Math.round(best.r*10)/10)+'× the time you plan',best.r>1?'Across '+best.n+' sessions. Plan about '+Math.round((best.r-1)*100)+'% longer so the day stops overflowing.':'Across '+best.n+' sessions you finish faster than planned. You can plan these shorter.')}
+  var hiF=D.ses.filter(function(s){return s.f>=4}),loF=D.ses.filter(function(s){return s.f&&s.f<=2});
+  if(hiF.length>=2&&loF.length>=2){var ph=mean(hiF.map(function(s){return s.p})),pl2=mean(loF.map(function(s){return s.p}));if(ph-pl2>=10)add('info','Focus decides how much you finish','At focus 4–5 you complete '+Math.round(ph)+'% of a task; at 1–2 only '+Math.round(pl2)+'%.')}
+  var hit=D.days.filter(function(x){return x.tot>=D.tg}).length,st=streakNow(D.tg);
+  if(D.n>=7)add(hit>=D.n*0.6||st>=3?'good':'info','You hit '+state.settings.min+'h on '+hit+' of '+D.n+' days','Current streak '+st+' day'+(st===1?'':'s')+', best in this period '+streakBest(D)+'.');
+  var wd=[0,1,2,3,4,5,6].map(function(w){var ds=D.days.filter(function(x){return dow(x.d)===w});return {w:w,n:ds.length,a:ds.length?mean(ds.map(function(x){return x.tot})):0}}).filter(function(x){return x.n>=2});
+  if(D.n>=14&&wd.length>=5){var wb=wd.reduce(function(a,b){return b.a>a.a?b:a}),ww=wd.reduce(function(a,b){return b.a<a.a?b:a});if(wb.a-ww.a>=120)add('info',DAYS[ww.w]+' is your lightest day','About '+fmtH(ww.a)+' on average, against '+fmtH(wb.a)+' on '+DAYS[wb.w]+'. Plan a lighter load or a revision day there.')}
+  var tot3=['P','C','M'].reduce(function(a,k){return a+(D.bs[k]?D.bs[k].m:0)},0);
+  if(tot3>=600){var sh=['P','C','M'].map(function(k){return {k:k,s:(D.bs[k]?D.bs[k].m:0)/tot3}}).sort(function(a,b){return a.s-b.s})[0];if(sh.s<0.22)add('warn',SUBS[sh.k]+' got only '+Math.round(sh.s*100)+'% of your study time','Physics, Chemistry and Maths each carry a third of the paper. Give '+SUBS[sh.k]+' a bigger share next week.')}
+  if(D.ptot>0&&Math.abs(D.tot-D.ptot)/D.ptot>=0.1)add(D.tot>D.ptot?'good':'warn','Study hours are '+(D.tot>D.ptot?'up ':'down ')+Math.abs(Math.round((D.tot-D.ptot)/D.ptot*100))+'%','Compared with the '+D.n+' days before.');
+  if(D.favg!=null&&D.pfavg!=null&&Math.abs(D.favg-D.pfavg)>=0.3)add(D.favg>D.pfavg?'good':'warn','Average focus is '+(D.favg>D.pfavg?'rising':'slipping'),fmtF(D.favg)+' / 5 now, '+fmtF(D.pfavg)+' in the period before.');
+  var qd=0,qp=0;D.ses.forEach(function(s){if(s.q){qd+=s.q[0]||0;qp+=s.q[1]||0}});
+  if(qp>=20&&qd/qp<0.85)add('info','You finish '+Math.round(qd/qp*100)+'% of the questions you plan','Plan fewer questions per block, or add time to the practice blocks.');
+  return out.slice(0,7);
+}
+
+/* the page */
+function rvTabs(){
+  return '<div class="rvtabs" role="group" aria-label="Review"><button data-act="rv-tab" data-v="week" aria-pressed="'+(ui.rv!=='insights')+'">This week</button><button data-act="rv-tab" data-v="insights" aria-pressed="'+(ui.rv==='insights')+'">Insights</button></div>';
+}
+function dailyHTML(D){
+  var n=D.n,mx=Math.max(D.tg*1.12,Math.max.apply(null,D.days.map(function(x){return x.tot})),60),KS=['P','C','M','O','T'];
+  var ma=D.days.map(function(x,i){return mean(D.days.slice(Math.max(0,i-6),i+1).map(function(y){return y.tot}))});
+  var cols=D.days.map(function(x,i){
+    var segs=KS.map(function(k){return x.k[k]?'<i style="height:'+(x.k[k]/mx*100).toFixed(2)+'%;background:'+kcol(k)+'"></i>':''}).join('');
+    var tip=shortDate(x.d)+'\n'+fmtH(x.tot)+' done'+(x.plan?' of '+fmtH(x.plan)+' planned':'')+KS.filter(function(k){return x.k[k]}).map(function(k){return '\n'+SUBS[k]+' '+fmtH(x.k[k])}).join('')+(x.fs.length?'\nFocus '+fmtF(mean(x.fs))+' / 5':'');
+    return '<div class="xdd'+(x.d===TODAY?' today':'')+(x.tot>=D.tg?' hit':'')+'" data-tip="'+esc(tip)+'" style="--i:'+Math.min(i,40)+'">'+segs+'</div>';
+  }).join('');
+  var path=ma.map(function(v,i){return (i?'L':'M')+((i+.5)/n*100).toFixed(2)+' '+(100-v/mx*100).toFixed(2)}).join(' ');
+  var ticks=[0,Math.floor((n-1)/2),n-1].filter(function(v,i,a){return a.indexOf(v)===i}).map(function(i){return '<span>'+dmon(D.days[i].d)+'</span>'}).join('');
+  return '<div class="xdly'+(n>45?' thin':'')+'"><div class="xdds">'+cols+'<span class="xtgl" style="bottom:'+(D.tg/mx*100).toFixed(2)+'%"><em>'+state.settings.min+'h target</em></span><svg class="xmav" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="'+path+'" vector-effect="non-scaling-stroke"/></svg></div><div class="xdax">'+ticks+'</div></div>'+
+    '<div class="xlg"><span><i style="background:var(--s-p)"></i>Physics</span><span><i style="background:var(--s-c)"></i>Chemistry</span><span><i style="background:var(--s-m)"></i>Maths</span><span><i style="background:var(--ink-3)"></i>School</span><span><i style="background:var(--s-t)"></i>Tests</span><span><i class="xln"></i>7-day average</span></div>';
+}
+function heatHTML(D){
+  var a=startOfWeek(D.start),weeks=Math.floor(dayDiff(a,TODAY)/7)+1,cells='',ml='',lastM=-1,w,r;
+  for(w=0;w<weeks;w++){
+    var wd=addDays(a,w*7),m0=parse(wd<D.start?D.start:wd).getMonth();
+    ml+='<span>'+(m0!==lastM?MON[m0]:'')+'</span>';lastM=m0;
+    for(r=0;r<7;r++){
+      var d=addDays(wd,r);
+      if(d<D.start||d>TODAY){cells+='<i class="xhc off"></i>';continue}
+      var x=D.byD[d],h=x.tot/D.tg,lv=x.tot<30?0:h<.4?1:h<.7?2:h<1?3:4;
+      cells+='<i class="xhc l'+lv+(d===TODAY?' today':'')+'" data-tip="'+esc(shortDate(d)+'\n'+fmtH(x.tot)+(x.tot>=D.tg?' · target hit':''))+'"></i>';
+    }
+  }
+  return '<div class="xhmx" style="--w:'+weeks+'"><div class="xhmd"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span></div><div class="xhmw"><div class="xhml">'+ml+'</div><div class="xhm">'+cells+'</div></div></div>'+
+    '<div class="xlg"><span class="mut">Less</span><i class="xhc l0"></i><i class="xhc l1"></i><i class="xhc l2"></i><i class="xhc l3"></i><i class="xhc l4"></i><span class="mut">Target reached</span></div>';
+}
+function insightsHTML(){
+  var D=insData(ui.ir),S=state.settings,h='<div class="rv ins">'+rvTabs();
+  var rg='<div class="seg sm" role="group" aria-label="Period">'+INS_R.map(function(r){return '<button data-act="ins-range" data-n="'+r[0]+'" aria-pressed="'+(ui.ir===r[0])+'">'+r[1]+'</button>'}).join('')+'</div>';
+  h+='<div class="xinsh"><h2>'+(ui.ir?'Last '+D.n+' days':'All time · '+D.n+' days')+'</h2>'+rg+'</div>';
+  if(!D.tot&&!D.ses.length){return h+icard('Nothing to analyse yet','',iempty('Finish a few tasks, or start the stopwatch with Study now, and your patterns show up here. Add a focus rating after each session to unlock the time-of-day, subject and distraction charts.'))+'</div>'}
+  /* tiles */
+  var qp=D.rm?Math.round(D.qm/D.rm*100):null,hit=D.days.filter(function(x){return x.tot>=D.tg}).length,st=streakNow(D.tg);
+  var planPct=D.plan?Math.round(D.tot/D.plan*100):null;
+  h+='<div class="xitl">'+
+    '<div class="card xit"><span class="xil">Study time</span><b class="num">'+fmtH(D.tot)+'</b>'+delta(D.tot,D.ptot,'',true)+'<span class="xis mut">'+(planPct!=null?planPct+'% of the plan · ':'')+fmtH(D.tot/D.n)+' a day</span>'+spark(D.days.map(function(x){return x.tot}),'var(--ink)',0,Math.max(D.tg,1))+'</div>'+
+    '<div class="card xit"><span class="xil">Average focus</span><b class="num">'+(D.favg!=null?fmtF(D.favg)+'<small> / 5</small>':'–')+'</b>'+(D.favg!=null?delta(D.favg,D.pfavg,''):'<span class="xis mut">no ratings yet</span>')+'<span class="xis mut">'+D.fses.length+' of '+D.ses.length+' sessions rated</span>'+spark(D.days.map(function(x){return x.fs.length?mean(x.fs):null}),'var(--ok)',1,5)+'</div>'+
+    '<div class="card xit"><span class="xil">Quality hours</span><b class="num">'+(D.rm?fmtH(D.qm):'–')+'</b><span class="xis mut">'+(qp!=null?qp+'% of rated time at focus 4–5':'needs focus ratings')+'</span></div>'+
+    '<div class="card xit"><span class="xil">Days at '+S.min+'h</span><b class="num">'+hit+'<small> / '+D.n+'</small></b><span class="xis '+(st>=3?'pos':'mut')+'">Streak '+st+' day'+(st===1?'':'s')+'</span><span class="xis mut">Best '+streakBest(D)+'</span></div>'+
+  '</div>';
+  /* coach */
+  var notes=insNotes(D);
+  h+=icard('What your data says','plain-language findings',notes.length?'<ul class="xnts">'+notes.map(function(x){return '<li class="xnt '+x.t+'"><b>'+esc(x.h)+'</b><span>'+esc(x.p)+'</span></li>'}).join('')+'</ul>':iempty('Keep logging and findings appear here.'));
+  /* daily */
+  h+=icard('Hours by day','stacked by subject, line is the 7-day average',dailyHTML(D));
+  /* quality stack */
+  var lv=[1,2,3,4,5].map(function(f){return D.fses.filter(function(s){return s.f===f}).reduce(function(a,s){return a+s.m},0)}),unr=D.ses.filter(function(s){return !s.f}).reduce(function(a,s){return a+s.m},0),tt=lv.reduce(function(a,b){return a+b},0)+unr;
+  if(tt>0){
+    h+=icard('Where your hours went, by focus','hours at each rating',
+      '<div class="xqb" role="img" aria-label="Hours by focus level">'+lv.map(function(m,i){return m?'<i style="flex:'+m+';background:'+ftone(i+1)+'" data-tip="'+esc(FOCUS[i]+' (focus '+(i+1)+')\n'+fmtH(m)+' · '+Math.round(m/tt*100)+'%')+'" tabindex="0"></i>':''}).join('')+(unr?'<i class="xunr" style="flex:'+unr+'" data-tip="'+esc('Not rated\n'+fmtH(unr)+' · '+Math.round(unr/tt*100)+'%')+'" tabindex="0"></i>':'')+'</div>'+
+      '<div class="xlg">'+lv.map(function(m,i){return '<span><i style="background:'+ftone(i+1)+'"></i>'+FOCUS[i]+' '+(m?fmtH(m):'–')+'</span>'}).join('')+(unr?'<span><i class="xunr"></i>Not rated '+fmtH(unr)+'</span>':'')+'</div>');
+  }
+  /* time of day + weekday */
+  var bestB=D.tb.filter(function(b){return b.g.fn>=2}).reduce(function(a,b){return !a||b.fav>a.fav?b:a},null);
+  var tod=D.fses.length?colChart(D.tb.map(function(b){return {lab:b.lab,h:b.g.fn?b.fav/5:null,v:b.g.fn?fmtF(b.fav):'',sub:b.g.n?fmtH(b.g.m):'',col:b.g.fn?ftone(b.fav):'var(--line)',best:bestB===b,tip:range(b.s,b.e)+'\n'+(b.g.fn?'Focus '+fmtF(b.fav)+' / 5 over '+b.g.fn+' rated session'+(b.g.fn>1?'s':''):'No rated sessions')+'\n'+(b.g.n?fmtH(b.g.m)+' studied in '+b.g.n+' session'+(b.g.n>1?'s':''):'Nothing studied')}}),'Average focus by time of day')+'<p class="xca">Bar = average focus, text under = hours studied. Uses the start time of each session.</p>':iempty(NEEDF);
+  var wk=[0,1,2,3,4,5,6].map(function(w){
+    var ds=D.days.filter(function(x){return dow(x.d)===w}),a=ds.length?mean(ds.map(function(x){return x.tot})):0,fs=[];
+    ds.forEach(function(x){fs=fs.concat(x.fs)});
+    return {w:w,n:ds.length,a:a,f:fs.length?mean(fs):null};
+  });
+  var wmx=Math.max.apply(null,wk.map(function(x){return x.a}).concat([60]));
+  var wkc=colChart(wk.map(function(x){return {lab:DAYS[x.w],h:x.a/wmx,v:x.n?fmtH(x.a):'',sub:x.f!=null?'<span class="xfd" style="background:'+ftone(x.f)+'"></span>'+fmtF(x.f):'',col:'color-mix(in srgb,var(--ink) 72%,var(--surface))',tip:DAYS[x.w]+' average over '+x.n+' day'+(x.n===1?'':'s')+'\n'+fmtH(x.a)+' studied'+(x.f!=null?'\nFocus '+fmtF(x.f)+' / 5':'')}}),'Average hours by weekday');
+  h+='<div class="xig">'+icard('When you focus best','average focus by time of day',tod)+icard('Your weekly rhythm','average hours, dot = focus',wkc)+'</div>';
+  /* subject + type */
+  var subRows=['P','C','M','O'].filter(function(k){return D.bs[k]}).map(function(k){var g=D.bs[k];return {lab:SUBS[k],w:g.fn?gfav(g)/5:0,col:kcol(k),val:g.fn?'<b>'+fmtF(gfav(g))+'</b> · '+fmtH(g.m):fmtH(g.m)+' · not rated',tip:SUBS[k]+'\n'+(g.fn?'Focus '+fmtF(gfav(g))+' / 5 over '+g.fn+' rated sessions':'No focus ratings')+'\n'+fmtH(g.m)+' in '+g.n+' sessions'}});
+  var typRows=STUDY_TYPES.filter(function(t){return D.bt[t]}).map(function(t){var g=D.bt[t];return {lab:t,w:g.fn?gfav(g)/5:0,col:'var(--ink)',val:g.fn?'<b>'+fmtF(gfav(g))+'</b> · '+fmtH(g.m):fmtH(g.m)+' · not rated',tip:t+'\n'+(g.fn?'Focus '+fmtF(gfav(g))+' / 5 over '+g.fn+' rated sessions':'No focus ratings')+'\n'+fmtH(g.m)+' in '+g.n+' sessions'}});
+  h+='<div class="xig">'+icard('Focus by subject','bar = average focus out of 5',subRows.length?hRows(subRows):iempty('No finished sessions.'))+icard('Focus by type of work','theory, DPP, PYQ and so on',typRows.length?hRows(typRows):iempty('No finished sessions.'))+'</div>';
+  /* length + blockers */
+  var lenc=D.fses.length?colChart(D.lb.map(function(b){return {lab:b.lab,h:b.g.fn?b.fav/5:null,v:b.g.fn?fmtF(b.fav):'',sub:b.g.fn?b.g.fn+' rated':'',col:b.g.fn?ftone(b.fav):'var(--line)',tip:'Planned '+b.lab+'\n'+(b.g.fn?'Focus '+fmtF(b.fav)+' / 5 over '+b.g.fn+' rated sessions':'No rated sessions')}}),'Focus by session length')+'<p class="xca">Do long blocks cost you focus? Compare the bars left to right.</p>':iempty(NEEDF);
+  var why={};D.ses.forEach(function(s){s.w.forEach(function(x){why[x]=(why[x]||0)+1})});
+  var wks=Object.keys(why).sort(function(a,b){return why[b]-why[a]}),wmax=wks.length?why[wks[0]]:1;
+  var low=D.fses.filter(function(s){return s.f<=2}).length;
+  var blk=wks.length?hRows(wks.map(function(x){return {lab:x,w:why[x]/wmax,col:'var(--over)',val:'<b>'+why[x]+'</b> · '+Math.round(why[x]/D.ses.length*100)+'%',tip:x+'\nNamed in '+why[x]+' of '+D.ses.length+' sessions'}}))+(WHYHINT[wks[0]]?'<p class="xca"><b>'+wks[0]+'.</b> '+WHYHINT[wks[0]]+'</p>':'')+(D.fses.length?'<p class="xca">'+low+' of '+D.fses.length+' rated sessions were at focus 1–2.</p>':''):iempty('No blockers recorded. Tick what got in the way in the log sheet to see the pattern.');
+  h+='<div class="xig">'+icard('Session length vs focus','average focus by planned length',lenc)+icard('What got in the way','how often each blocker was named',blk)+'</div>';
+  /* plan vs reality + focus pays off */
+  var ev=grp(D.ses.filter(function(s){return s.p>=100&&s.lm!=null}),function(s){return s.k+'|'+s.type}),prow=[];
+  Object.keys(ev).forEach(function(k){var pl=0,g=ev[k];D.ses.forEach(function(s){if(s.p>=100&&s.lm!=null&&s.k+'|'+s.type===k)pl+=s.dur});if(g.n>=2&&pl)prow.push({k:k,n:g.n,r:g.m/pl,pl:pl/g.n,ac:g.m/g.n})});
+  prow.sort(function(a,b){return Math.abs(b.r-1)*b.n-Math.abs(a.r-1)*a.n});
+  var prh=prow.length?'<div class="xpvr">'+prow.slice(0,6).map(function(x){var s=x.k.split('|'),dv=clamp((x.r-1)/0.5,-1,1);return '<div class="xpr" data-tip="'+esc(SUBS[s[0]]+' · '+s[1]+'\nPlanned '+dur(Math.round(x.pl))+' on average\nTook '+dur(Math.round(x.ac))+' on average ('+x.n+' sessions)')+'" tabindex="0"><span class="xhl"><i class="xdot" style="background:'+kcol(s[0])+'"></i>'+SUBS[s[0]].replace('School subject','School')+' · '+s[1]+'</span><span class="xpt"><b style="'+(dv>=0?'left:50%;width:'+(dv*50)+'%;background:var(--over)':'right:50%;width:'+(-dv*50)+'%;background:var(--ok)')+'"></b></span><span class="xhv num"><b>'+(Math.round(x.r*10)/10)+'×</b> '+(x.r>=1?'longer':'quicker')+'</span></div>'}).join('')+'<div class="xpax"><span>quicker</span><span>as planned</span><span>longer</span></div></div><p class="xca">Time you actually spent against the time you planned, for tasks you finished. Right of centre means plan more minutes.</p>':iempty('Needs at least 2 finished tasks of the same subject and type with minutes logged.');
+  var fp=[1,2,3,4,5].map(function(f){var l=D.ses.filter(function(s){return s.f===f});return {f:f,n:l.length,p:l.length?mean(l.map(function(s){return s.p})):null}});
+  var fpc=D.fses.length?colChart(fp.map(function(x){return {lab:x.f+'',h:x.p!=null?x.p/100:null,v:x.p!=null?Math.round(x.p)+'%':'',sub:x.n?x.n+' task'+(x.n>1?'s':''):'',col:x.p!=null?ftone(x.f):'var(--line)',tip:'Focus '+x.f+' · '+FOCUS[x.f-1]+'\n'+(x.n?'You finish '+Math.round(x.p)+'% of a task on average ('+x.n+' tasks)':'No tasks at this level')}}),'Completion by focus level')+'<p class="xca">Share of each task you complete at each focus rating (1 distracted, 5 sharp).</p>':iempty(NEEDF);
+  h+='<div class="xig">'+icard('Plan vs reality','how long tasks really take',prh)+icard('Focus pays off','completion by focus level',fpc)+'</div>';
+  /* heatmap */
+  h+=icard('Consistency','each square is a day, darker means closer to your '+S.min+'h target',heatHTML(D));
+  /* balance + questions */
+  var tt3=0;['P','C','M','O','T'].forEach(function(k){tt3+=D.days.reduce(function(a,x){return a+(x.k[k]||0)},0)});
+  var bal=tt3?hRows(['P','C','M','O','T'].map(function(k){return {k:k,m:D.days.reduce(function(a,x){return a+(x.k[k]||0)},0)}}).filter(function(x){return x.m>0}).map(function(x){return {lab:SUBS[x.k],w:x.m/tt3,col:kcol(x.k),val:'<b>'+Math.round(x.m/tt3*100)+'%</b> · '+fmtH(x.m),tip:SUBS[x.k]+'\n'+fmtH(x.m)+' of '+fmtH(tt3)+' ('+Math.round(x.m/tt3*100)+'%)'}})):iempty('No study time yet.');
+  var qs={};D.ses.forEach(function(s){if(s.q){var g=qs[s.k]||(qs[s.k]={d:0,p:0,n:0});g.d+=s.q[0]||0;g.p+=s.q[1]||0;g.n++}});
+  var qk=['P','C','M','O'].filter(function(k){return qs[k]&&(qs[k].d||qs[k].p)});
+  var qh=qk.length?hRows(qk.map(function(k){var g=qs[k],mx2=Math.max.apply(null,qk.map(function(z){return Math.max(qs[z].d,qs[z].p)}));return {lab:SUBS[k],w:Math.max(g.d,g.p)?g.d/Math.max(mx2,1):0,col:kcol(k),val:'<b>'+g.d+'</b>'+(g.p?' of '+g.p+' · '+Math.round(g.d/g.p*100)+'%':''),tip:SUBS[k]+'\n'+g.d+' questions done'+(g.p?' of '+g.p+' planned':'')}}))+'<p class="xca">Questions done, and the share of the ones you planned.</p>':iempty('Add “Questions done” in the log sheet to see practice volume.');
+  h+='<div class="xig">'+icard('Subject balance','share of your study time',bal)+icard('Practice volume','questions done per subject',qh)+'</div>';
+  /* notes + tests */
+  var nl=D.ses.filter(function(s){return s.n}).sort(function(a,b){return a.d<b.d?1:-1}).slice(0,6);
+  var nh=nl.length?'<ul class="lst">'+nl.map(function(s){return '<li class="rvt"><span><b>'+esc(s.n)+'</b><small>'+shortDate(s.d)+' · '+esc(s.t.title)+'</small></span><span class="num">'+(s.f?'<span class="xfd" style="background:'+ftone(s.f)+'"></span>'+s.f+'/5':'')+'</span></li>'}).join('')+'</ul>':iempty('Notes you write in the log sheet (like “stuck on torque problems”) collect here.');
+  var ts=allTests().filter(function(t){return t.test.res&&t.date<=TODAY}).sort(byWhen).slice(-5).reverse();
+  var th=ts.length?'<ul class="lst">'+ts.map(function(t){var p=pctOf(t),tm=t.test.tm;return '<li class="rvt"><span><b>'+esc(t.title)+'</b><small>'+shortDate(t.date)+(tm&&tm.used?' · '+dur(tm.used)+' used':'')+'</small></span><span class="num"><b>'+pc(p)+'</b></span></li>'}).join('')+'</ul><button class="btn sm" data-act="view" data-v="tests" style="margin-top:8px">Open tests</button>':iempty('No test results yet.');
+  h+='<div class="xig">'+icard('Your own notes','from the log sheet',nh)+icard('Latest tests','',th)+'</div>';
+  return h+'</div>';
+}
+
+/* ---------- exam timer: sit a mock test and record where the time went ---------- */
+function exFlush(){var x=timer&&timer.ex;if(!x)return;var n=Date.now();if(timer.paused==null&&x.at)x.acc[x.cur]=(x.acc[x.cur]||0)+Math.max(0,n-x.at);x.at=n}
+function exMs(k){var x=timer.ex,v=x.acc[k]||0;if(k===x.cur&&timer.paused==null&&x.at)v+=Math.max(0,Date.now()-x.at);return v}
+function exTm(){
+  exFlush();var x=timer.ex,o={},sum=0;
+  x.subs.split('').concat(['B']).forEach(function(k){var m=Math.round((x.acc[k]||0)/60000);o[k]=m;sum+=m});
+  o.used=sum;o.d=Math.round(timer.planned/60000);return o;
+}
+function openExamStart(id){
+  var t=get(id);if(!t||!t.test)return;
+  if(timer){toast(timer.ex?'A test is already running.':'Finish the running timer first.');return}
+  ui.overlay={kind:'exstart',id:id};
+  var subs=t.test.subs.split(''),opts=subs.map(function(k,i){return '<label class="kopt k-'+k+'"><input type="radio" name="first" value="'+k+'"'+(i===0?' checked':'')+'><span class="kb"><span class="chip">'+k+'</span>'+SUBS[k]+'</span></label>'}).join('');
+  openOv('<form class="sheet" id="xs" novalidate role="dialog" aria-modal="true" aria-labelledby="xsh" autocomplete="off">'+
+    '<h3 id="xsh">Start test</h3><p class="empty" style="margin:-4px 0 0"><b>'+esc(t.title)+'</b> · '+TEST_KINDS[t.test.k].label+' · '+t.test.max+' marks</p>'+
+    '<label class="f">Time allowed (minutes)<input type="number" id="xs-d" name="d" min="10" max="480" step="5" value="'+t.dur+'"></label>'+
+    (subs.length>1?'<fieldset class="kinds"><legend>Which subject do you start with?</legend>'+opts+'</fieldset>':'')+
+    '<p class="hint">During the test, tap a subject whenever you switch. The timer records how long you spend on each, plus breaks, and fills them into the result.</p>'+
+    '<p class="err" hidden></p>'+
+    '<div class="actions"><span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Start the test</button></div></form>','#xs-d');
+}
+function saveExamStart(form){
+  var id=ui.overlay&&ui.overlay.id,t=get(id);if(!t||!t.test)return closeOv();
+  var fd=new FormData(form),d=Math.round(+fd.get('d'));
+  if(!(d>=10&&d<=480))return showErr(form,'Time allowed must be between 10 and 480 minutes.','#xs-d');
+  var first=String(fd.get('first')||t.test.subs[0]);
+  closeOv();
+  try{if(!audio&&window.AudioContext)audio=new AudioContext();if(audio&&audio.state==='suspended')audio.resume()}catch(e){}
+  try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
+  var n=Date.now(),acc={B:0};t.test.subs.split('').forEach(function(k){acc[k]=0});
+  timer={id:id,title:t.title,total:d*60000,planned:d*60000,end:n+d*60000,paused:null,fired:false,capped:false,slotEnd:null,ex:{cur:t.test.subs.indexOf(first)>=0?first:t.test.subs[0],acc:acc,at:n,w:0,subs:t.test.subs}};
+  saveTimer();renderTimer();
+}
+function exPace(){
+  var x=timer.ex,n=x.subs.length,r=tmRem();
+  if(timer.fired)return 'Time is up. Submit the test.';
+  if(r<=10*60000)return '10 minutes left. Mark what you can and leave the stuck questions.';
+  if(r<=30*60000)return '30 minutes left.';
+  if(x.cur==='B')return 'On a break. The test clock is still running.';
+  var share=timer.planned/n,used=exMs(x.cur);
+  return SUBS[x.cur]+': '+tmUp(used)+' so far. An even split gives each subject about '+dur(Math.round(share/60000))+'.';
+}
+function exTick(){
+  var x=timer.ex,tt=get(timer.id);
+  if(!tt||tt.done){stopTimer();return}
+  var paused=timer.paused!=null,r=tmRem(),c=$('#tm-clock'),f=$('#tm-fill'),over=timer.fired||(!paused&&r<=0);
+  if(c)c.textContent=over?'+'+tmUp(paused?0:Math.max(0,Date.now()-timer.end)):tmFmt(r);
+  if(f)f.style.width=Math.min(100,(1-r/timer.total)*100)+'%';
+  x.subs.split('').concat(['B']).forEach(function(k){var e=document.querySelector('[data-xs="'+k+'"]');if(e)e.textContent=tmUp(exMs(k))});
+  var nt=$('#ex-note');if(nt)nt.textContent=paused?'Paused. The clock and the subject timers are stopped.':exPace();
+  document.title=(over?'Time is up':tmFmt(r))+' · '+timer.title;
+  if(!paused){
+    if(!timer.fired&&r<=0){timer.fired=true;saveTimer();renderTimer();beep();try{if(window.Notification&&Notification.permission==='granted')new Notification('Time is up',{body:timer.title})}catch(e){}return}
+    var w=r<=10*60000?2:r<=30*60000?1:0;
+    if(w>(x.w||0)&&!timer.fired){x.w=w;saveTimer();beep()}
+  }
+}
+function renderExam(el,paused,was){
+  var x=timer.ex,subs=x.subs.split('').concat(['B']);
+  el.innerHTML='<div class="tmr ex'+(timer.fired?' up':paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">Test · '+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><div class="tmb"><i id="tm-fill"></i></div>'+
+    '<div class="xsec" role="group" aria-label="Subject you are working on">'+subs.map(function(k){return '<button class="xsb k-'+k+'" data-act="ex-sec" data-s="'+k+'" aria-pressed="'+(x.cur===k)+'"><span class="chip">'+(k==='B'?'·':k)+'</span><span>'+(k==='B'?'Break':SUBS[k])+'</span><b class="num" data-xs="'+k+'">0:00</b></button>'}).join('')+'</div>'+
+    '<p class="tmn" id="ex-note"></p><div class="acts"><button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm pri" data-act="timer-done">Submit test</button><button class="btn sm" data-act="timer-stop" id="ex-stop">Discard</button></div></div>';
+  exTick();
+  if(!paused)tmI=setInterval(tmTick,1000);
+}
+function openExamSubmit(){
+  if(!timer||!timer.ex)return;
+  exFlush();if(timer.paused==null){timer.paused=tmRem();saveTimer();renderTimer()}
+  var tm=exTm(),x=timer.ex,left=Math.round(timer.paused/60000);
+  ui.overlay={kind:'exsub'};
+  openOv('<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="xeh"><h3 id="xeh">Submit this test?</h3>'+
+    '<p class="empty" style="margin:-4px 0 0"><b>'+esc(timer.title)+'</b> · '+dur(tm.used)+' used'+(timer.fired?'':', '+dur(left)+' left')+'</p>'+
+    '<div class="xhb">'+x.subs.split('').concat(['B']).map(function(k){return '<div class="xhr"><span class="xhl">'+(k==='B'?'Break / other':SUBS[k])+'</span><span class="xht"><i style="--w:'+Math.round((tm[k]/Math.max(1,tm.used))*100)+'%;--c:'+(k==='B'?'var(--line-strong)':kcol(k))+'"></i></span><span class="xhv num"><b>'+dur(tm[k])+'</b></span></div>'}).join('')+'</div>'+
+    '<p class="hint">Next you enter your marks and rank. The time per subject is saved with the result.</p>'+
+    '<div class="actions"><button type="button" class="btn danger" data-act="ex-discard">Discard</button><span class="sp"></span><button type="button" class="btn" data-act="ex-keep">Keep going</button><button type="button" class="btn pri" data-act="ex-submit">Submit and add result</button></div></div>');
+}
+function examSubmit(){
+  if(!timer||!timer.ex)return closeOv();
+  var id=timer.id,t=get(id),tm=exTm();
+  closeOv();stopTimer();
+  if(!t||!t.test)return;
+  mutate(function(){t.test.tm=tm;t.sample=false},'Test time saved.');
+  openResultForm(id);
+}
+var exArm=0;
+function exDiscard(sure){
+  if(!timer||!timer.ex)return;
+  if(!sure){
+    var b=$('#ex-stop');
+    if(Date.now()-exArm>4000){exArm=Date.now();if(b)b.textContent='Tap again to discard';toast('Tap Discard again within 4 seconds to throw this test attempt away.');return}
+  }
+  exArm=0;stopTimer();toast('Test attempt discarded.');
+}
+/* where the exam time went, over the tests you timed */
+function examTimeHTML(res){
+  var ts=res.filter(function(t){return t.test.tm&&t.test.tm.used>0});
+  if(!ts.length)return '';
+  var last=ts.slice(-8),mx=Math.max.apply(null,last.map(function(t){return Math.max(t.test.tm.used,t.test.tm.d||0)}).concat([30]));
+  var rows=last.map(function(t){
+    var tm=t.test.tm,ks=t.test.subs.split('').concat(['B']),p=pctOf(t);
+    return '<div class="xtr"><span class="xtl"><b>'+esc(t.title)+'</b><small>'+dmon(t.date)+' · '+dur(tm.used)+(tm.d?' of '+dur(tm.d):'')+'</small></span><span class="xtt"><span class="xtb" style="width:'+(tm.used/mx*100).toFixed(1)+'%">'+ks.filter(function(k){return tm[k]>0}).map(function(k){return '<i style="flex:'+tm[k]+';background:'+(k==='B'?'var(--line-strong)':kcol(k))+'" data-tip="'+esc((k==='B'?'Break / other':SUBS[k])+'\n'+dur(tm[k])+' · '+Math.round(tm[k]/tm.used*100)+'% of the time')+'" tabindex="0"></i>'}).join('')+'</span></span><span class="xtv num">'+(p==null?'–':pc(p))+'</span></div>';
+  }).join('');
+  var agg={},tt=0,mt=0;
+  ts.forEach(function(t){t.test.subs.split('').forEach(function(k){var m=t.test.tm[k],v=subVal(t,k);if(!(m>0)||v==null)return;var g=agg[k]||(agg[k]={m:0,v:0,n:0});g.m+=m;g.v+=v;g.n++})});
+  var ak=Object.keys(agg);ak.forEach(function(k){tt+=agg[k].m;mt+=Math.max(0,agg[k].v)});
+  var eff2=ak.map(function(k){return {k:k,mpm:agg[k].v/agg[k].m,ts:agg[k].m/tt,ms:mt?Math.max(0,agg[k].v)/mt:0,m:agg[k].m/agg[k].n}});
+  var mxe=Math.max.apply(null,eff2.map(function(x){return Math.max(0,x.mpm)}).concat([0.01]));
+  var er=eff2.length>=1?hRows(eff2.map(function(x){return {lab:SUBS[x.k],w:Math.max(0,x.mpm)/mxe,col:kcol(x.k),val:'<b>'+(Math.round(x.mpm*100)/100)+'</b> marks/min · '+Math.round(x.ts*100)+'% of time, '+Math.round(x.ms*100)+'% of marks',tip:SUBS[x.k]+'\nAbout '+dur(Math.round(x.m))+' per test\n'+(Math.round(x.mpm*100)/100)+' marks for every minute\n'+Math.round(x.ts*100)+'% of your exam time, '+Math.round(x.ms*100)+'% of your marks'}})):'';
+  var note='';
+  if(eff2.length>=2){
+    var hi=eff2.reduce(function(a,b){return b.mpm>a.mpm?b:a}),lo=eff2.reduce(function(a,b){return b.mpm<a.mpm?b:a}),gap=eff2.reduce(function(a,b){return (b.ts-b.ms)>(a.ts-a.ms)?b:a});
+    if(gap.ts-gap.ms>=0.08)note='<p class="xca">You spend <b>'+Math.round(gap.ts*100)+'%</b> of exam time on '+SUBS[gap.k]+' but it brings <b>'+Math.round(gap.ms*100)+'%</b> of your marks. Cap it, or make a first pass over the easy questions.</p>';
+    else if(hi.mpm>0&&lo.mpm<hi.mpm*0.7)note='<p class="xca">'+SUBS[hi.k]+' pays best at <b>'+(Math.round(hi.mpm*100)/100)+'</b> marks a minute, '+SUBS[lo.k]+' the least at <b>'+(Math.round(lo.mpm*100)/100)+'</b>.</p>';
+  }
+  var avgUse=mean(ts.map(function(t){return t.test.tm.used/(t.test.tm.d||t.dur)*100})),avgB=mean(ts.map(function(t){return t.test.tm.B||0}));
+  return '<section class="card ins xtime"><header><h3>Time in the exam<small>from the test timer, '+ts.length+' test'+(ts.length>1?'s':'')+'</small></h3></header>'+
+    '<div class="xtl2">'+rows+'</div>'+
+    '<div class="xlg"><span><i style="background:var(--s-p)"></i>Physics</span><span><i style="background:var(--s-c)"></i>Chemistry</span><span><i style="background:var(--s-m)"></i>Maths</span><span><i style="background:var(--line-strong)"></i>Break / other</span></div>'+
+    (er?'<h4 class="xh4">Marks for every minute</h4>'+er+note:'<p class="xca">Enter subject marks in the results to see marks per minute.</p>')+
+    '<p class="xca">You use on average <b>'+Math.round(avgUse)+'%</b> of the time allowed'+(avgB>=1?' and spend about <b>'+dur(Math.round(avgB))+'</b> on breaks or other.':'.')+'</p></section>';
+}
+var itip=null;
+function itipShow(el){
+  var s=el.getAttribute('data-tip');if(!s)return itipHide();
+  if(!itip){itip=document.createElement('div');itip.className='tip tipf';itip.hidden=true;document.body.appendChild(itip)}
+  var ls=s.split('\n');itip.textContent='';
+  var hd=document.createElement('b');hd.className='tipt';hd.textContent=ls[0];itip.appendChild(hd);
+  ls.slice(1).forEach(function(l){var d=document.createElement('div');d.textContent=l;itip.appendChild(d)});
+  itip.hidden=false;
+  var r=el.getBoundingClientRect(),tw=itip.offsetWidth,th=itip.offsetHeight,x=clamp(r.left+r.width/2-tw/2,6,window.innerWidth-tw-6),y=r.top-th-8;
+  if(y<6)y=r.bottom+8;
+  itip.style.left=x+'px';itip.style.top=y+'px';
+}
+function itipHide(){if(itip)itip.hidden=true}
+document.addEventListener('pointerover',function(e){var t=e.target.closest?e.target.closest('[data-tip]'):null;if(t)itipShow(t);else itipHide()});
+document.addEventListener('pointerdown',function(e){var t=e.target.closest?e.target.closest('[data-tip]'):null;if(t)itipShow(t);else itipHide()});
+document.addEventListener('focusin',function(e){var t=e.target.closest?e.target.closest('[data-tip]'):null;if(t)itipShow(t)});
+document.addEventListener('focusout',itipHide);
+window.addEventListener('scroll',itipHide,true);
+
+function reviewHTML(){return ui.rv==='insights'?insightsHTML():reviewWeekHTML()}
+
 /* ---------- study timer ---------- */
 var TK='jee-planner-timer',timer=null,tmI=0,baseTitle=document.title,audio=null;
 var PLAY='<svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 3.2v9.6L13 8z"/></svg>';
@@ -1719,6 +2214,7 @@ function tmFmt(ms){var s=Math.ceil(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%
 function startTimer(id){
   var t=get(id);if(!t||t.done||t.kind==='R')return;
   if(timer&&timer.up){toast('Finish the free study session first.');return}
+  if(t.test){openExamStart(id);return}
   try{if(!audio&&window.AudioContext)audio=new AudioContext();if(audio&&audio.state==='suspended')audio.resume()}catch(e){}
   try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(e){}
   var n=new Date(),nowMs=n.getTime(),nm=n.getHours()*60+n.getMinutes()+n.getSeconds()/60,span=t.dur*60000,capped=false,slotEnd=null;
@@ -1734,6 +2230,7 @@ function stopTimer(){timer=null;saveTimer();renderTimer()}
 function endTimer(mode){
   if(!timer)return;
   if(timer.up){openFree();return}
+  if(timer.ex){if(mode==='stop'){exDiscard()}else openExamSubmit();return}
   var id=timer.id,t=get(id),studied=Math.round((timer.total-tmRem())/60000),planned=Math.round(timer.planned/60000);
   stopTimer();
   if(!t||t.done)return;
@@ -1810,6 +2307,7 @@ function beep(){
 }
 function tmTick(){
   if(!timer){return}
+  if(timer.ex){exTick();return}
   if(timer.up){var e0=tmEl(),c0=$('#tm-clock');if(c0)c0.textContent=tmUp(e0);document.title=tmUp(e0)+' · '+timer.title;return}
   var tt=get(timer.id);if(!tt||tt.done||!tt.date){stopTimer();return}
   var r=tmRem(),c=$('#tm-clock'),f=$('#tm-fill');
@@ -1825,9 +2323,11 @@ function renderTimer(){
   var el=$('#timer');if(!el)return;
   clearInterval(tmI);tmI=0;
   document.body.classList.toggle('has-timer',!!timer);
-  if(!timer){el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
+  if(!timer){document.body.classList.remove('has-ex');el.hidden=true;el.innerHTML='';document.title=baseTitle;return}
   var paused=timer.paused!=null;
   var was=!el.hidden;el.hidden=false;
+  document.body.classList.toggle('has-ex',!!timer.ex);
+  if(timer.ex){renderExam(el,paused,was);return}
   if(timer.up){
     el.innerHTML='<div class="tmr'+(paused?'':' run')+(was?'':' enter')+'" role="timer"><div class="tmi"><span class="tmt">'+esc(timer.title)+'</span><b class="num" id="tm-clock"></b></div><p class="tmn">Free study. No plan needed: finish to save this time to today.</p><div class="acts"><button class="btn sm" data-act="'+(paused?'timer-resume':'timer-pause')+'">'+(paused?'Resume':'Pause')+'</button><button class="btn sm pri" data-act="timer-done">Finish and save</button></div></div>';
     tmTick();if(!paused)tmI=setInterval(tmTick,1000);return;
@@ -2144,7 +2644,7 @@ function renderTestsView(){
   var chart1='<section class="card"><header><h3>Marks<small>% of maximum marks</small></h3><div class="lgs" role="group" aria-label="Lines shown">'+legend+'</div></header><div class="plot" id="plot1" tabindex="0"></div></section>';
   var chart2='<section class="card"><header><h3>'+(rk==='pct'?'Percentile':'Rank')+'<small>'+(rk==='pct'?'Higher is better':'Lower is better. Batch sizes differ, so use percentile to compare.')+'</small></h3>'+
     '<div class="seg" role="group" aria-label="Rank chart measure"><button data-act="rankmode" data-m="pct" aria-pressed="'+(rk==='pct')+'">Percentile</button><button data-act="rankmode" data-m="rank" aria-pressed="'+(rk==='rank')+'">Rank</button></div></header><div class="plot" id="plot2" tabindex="0"></div>'+pctNote(res,rk)+'</section>';
-  return stats+filters+chart1+chart2+testsTable(res);
+  return stats+filters+chart1+chart2+examTimeHTML(res)+testsTable(res);
 }
 /* tests that have a rank but cannot be turned into a percentile are left off the percentile chart, so say which ones and why */
 function pctNote(res,rk){
@@ -2175,7 +2675,7 @@ function testsTable(res){
       '<td class="n'+(p==null?' e':'')+'" data-l="Score">'+(p==null?'<span class="mut">—</span>':pc(p))+'</td>'+sc('P','Phy')+sc('C','Chem')+sc('M','Maths')+
       '<td class="n'+(r&&r.rank?'':' e')+'" data-l="Rank">'+(r&&r.rank?r.rank+(r.of?'<span class="mut"> / '+r.of+'</span>':''):'<span class="mut">—</span>')+'</td>'+
       '<td class="n'+(pt==null?' e':'')+'" data-l="%ile">'+(pt==null?'<span class="mut">—</span>':pt.toFixed(1))+'</td>'+
-      '<td class="act"><button class="btn sm'+(!r&&dd<=0?' pri':'')+'" data-act="open-result" data-id="'+t.id+'">'+(r?'Edit result':'Add result')+'</button> <button class="btn sm" data-act="edit" data-id="'+t.id+'">Edit test</button></td></tr>';
+      '<td class="act">'+(!r&&dd===0?'<button class="btn sm pri" data-act="timer-start" data-id="'+t.id+'">Start test</button> ':'')+'<button class="btn sm'+(!r&&dd<=0&&dd!==0?' pri':'')+'" data-act="open-result" data-id="'+t.id+'">'+(r?'Edit result':'Add result')+'</button> <button class="btn sm" data-act="edit" data-id="'+t.id+'">Edit test</button></td></tr>';
   }
   var body=sec('Awaiting result',awaiting.length,awaiting.map(row).join(''))+sec('Upcoming',upcoming.length,upcoming.map(row).join(''))+sec('Results',done.length,done.map(row).join(''));
   if(!body)body='<tr><td colspan="10" class="mut" style="padding:16px 10px">No tests match these filters.</td></tr>';
@@ -2372,7 +2872,7 @@ function saveTest(form){
 }
 function openResultForm(id){
   var t=get(id);if(!t||!t.test)return;
-  var tt=t.test,r=tt.res||{},multi=tt.subs.length>1;
+  var tt=t.test,r=tt.res||{},multi=tt.subs.length>1,r2tm=tt.tm||null;
   ui.overlay={kind:'result',id:id};
   var sm=Math.round(subMax(t)*100)/100;
   var subF=multi?'<div class="grid3">'+tt.subs.split('').map(function(s){return '<label class="f">'+SUBS[s]+' (max '+sm+')<input type="number" step="any" inputmode="decimal" name="'+s+'" data-sub="1" value="'+(typeof r[s]==='number'?r[s]:'')+'"></label>'}).join('')+'</div>':'';
@@ -2387,6 +2887,7 @@ function openResultForm(id){
     '<label class="f">Out of (students)<input type="number" min="1" step="1" inputmode="numeric" id="rf-of" name="of" value="'+(r.of||'')+'"></label></div>'+
     '<div class="grid2"><label class="f">Percentile (optional)<input type="number" min="0" max="100" step="any" inputmode="decimal" id="rf-pct" name="pct" value="'+(typeof r.pct==='number'?r.pct:'')+'"><small>Left empty, it is worked out from rank and batch size.</small></label>'+
     '<label class="f">Note<input name="note" maxlength="120" placeholder="e.g. lost marks in electrostatics" value="'+esc(r.note||'')+'"></label></div>'+
+    '<fieldset class="kinds"><legend>Time spent in minutes (optional, filled in by the test timer)</legend><div class="grid3">'+tt.subs.split('').concat(['B']).map(function(k){var v=r2tm&&typeof r2tm[k]==='number'?r2tm[k]:'';return '<label class="f">'+(k==='B'?'Break / other':SUBS[k])+'<input type="number" min="0" max="600" step="1" inputmode="numeric" name="t'+k+'" value="'+v+'"></label>'}).join('')+'</div></fieldset>'+
     '<p class="err" hidden></p>'+
     '<div class="actions">'+(tt.res?'<button type="button" class="btn danger" data-act="del-result">Remove result</button>':'')+'<span class="sp"></span><button type="button" class="btn" data-act="close-ov">Cancel</button><button type="submit" class="btn pri">Save result</button></div></form>',
     multi?'[data-sub]':'#rf-tot');
@@ -2416,10 +2917,14 @@ function saveResult(form){
   if(res.rank&&res.of&&res.rank>res.of)return showErr(form,'Rank cannot be larger than the number of students.','#rf-rank');
   if(pct!=null){if(isNaN(pct)||pct<0||pct>100)return showErr(form,'Percentile must be between 0 and 100.','#rf-pct');res.pct=pct}
   var note=String(fd.get('note')||'').trim();if(note)res.note=note;
+  var tmv={},tsum=0,anyT=false;
+  tt.subs.split('').concat(['B']).forEach(function(k){var v=num('t'+k);if(v!=null&&!isNaN(v)&&v>=0&&v<=600){tmv[k]=Math.round(v);tsum+=Math.round(v);anyT=true}});
+  if(anyT){tmv.used=tsum;tmv.d=(tt.tm&&tt.tm.d)||t.dur}
   closeOv();
   var first=!tt.res,added=0;
   mutate(function(){
     tt.res=res;t.done=true;t.sample=false;
+    if(anyT)tt.tm=tmv;else delete tt.tm;
     if(first)followUps(t).forEach(function(x){state.tasks.push(x);added++});
   },function(){return 'Result saved: '+pc(res.tot/tt.max*100)+' in “'+t.title+'”'+(added?'. '+added+' follow-up task'+(added>1?'s':'')+' added to the bank.':'')});
 }
@@ -2779,15 +3284,21 @@ document.addEventListener('click',function(e){
     case 'log-undone':{var uid2=ui.overlay&&ui.overlay.id;closeOv();var ut=get(uid2);if(ut)mutate(function(){if(ut.log&&ut.log.e&&ut.log.s!=null){ut.dur=ut.log.e;ut.start=ut.log.s}ut.done=false;ut.log=null},'Marked not done');break}
     case 'timer-start':startTimer(id);break;
     case 'timer-start-form':{var sid=ui.overlay&&ui.overlay.id;closeOv();if(sid)startTimer(sid);break}
-    case 'timer-pause':if(timer){timer.paused=timer.up?tmEl():tmRem();saveTimer();renderTimer()}break;
-    case 'timer-resume':if(timer&&timer.paused!=null){if(timer.up)timer.since=Date.now()-timer.paused;else timer.end=Date.now()+timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
-    case 'timer-add':if(timer&&!timer.up){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
+    case 'timer-pause':if(timer){if(timer.ex)exFlush();timer.paused=timer.up?tmEl():tmRem();saveTimer();renderTimer()}break;
+    case 'timer-resume':if(timer&&timer.paused!=null){if(timer.up)timer.since=Date.now()-timer.paused;else timer.end=Date.now()+timer.paused;timer.paused=null;if(timer.ex)timer.ex.at=Date.now();saveTimer();renderTimer()}break;
+    case 'ex-sec':if(timer&&timer.ex){exFlush();timer.ex.cur=el.dataset.s;saveTimer();renderTimer()}break;
+    case 'ex-submit':examSubmit();break;
+    case 'ex-keep':closeOv();if(timer&&timer.ex&&timer.paused!=null){timer.end=Date.now()+timer.paused;timer.paused=null;timer.ex.at=Date.now();saveTimer();renderTimer()}break;
+    case 'ex-discard':closeOv();exDiscard(true);break;
+    case 'timer-add':if(timer&&!timer.up&&!timer.ex){var ms=(+el.dataset.m||5)*60000;timer.total+=ms;if(timer.paused!=null)timer.paused+=ms;else if(timer.fired){timer.end=Date.now()+ms;timer.fired=false}else timer.end+=ms;timer.fired=false;saveTimer();renderTimer()}break;
     case 'free-open':openFreeStart();break;
     case 'free-start':closeOv();startFree(el.dataset.k);break;
     case 'free-keep':closeOv();if(timer&&timer.up&&timer.paused!=null){timer.since=Date.now()-timer.paused;timer.paused=null;saveTimer();renderTimer()}break;
     case 'free-discard':closeOv();if(timer&&timer.up){stopTimer();toast('Session discarded.')}break;
     case 'timer-done':endTimer('done');break;
     case 'timer-stop':endTimer('stop');break;
+    case 'rv-tab':ui.rv=el.dataset.v==='insights'?'insights':'week';render();break;
+    case 'ins-range':ui.ir=+el.dataset.n||0;render();break;
     case 'review-open':ui.view='review';ui.sel=TODAY;render();break;
     case 'review-hide':ui.hideReview=true;renderBanner();break;
     case 'rv-bank':{var wk=weekData(startOfWeek(ui.sel)).slipped;toBank(wk.map(function(t){return t.id}),'Moved '+wk.length+' unfinished tasks to the backlog');break}
@@ -2841,6 +3352,7 @@ document.addEventListener('submit',function(e){
   else if(e.target.id==='af')authDo('signin');
   else if(e.target.id==='lf')saveLog(e.target);
   else if(e.target.id==='ff')saveFree(e.target);
+  else if(e.target.id==='xs')saveExamStart(e.target);
   else if(e.target.id==='tr')applyTriage(e.target);
   else if(e.target.id==='pl'){var pqf=$('#pl-quick');if(pqf&&pqf.value.trim()&&document.activeElement===pqf){document.querySelector('[data-act=pl-add]').click()}else plPreview()}
   else if(e.target.id==='qb'){
@@ -2997,7 +3509,7 @@ var FX=(function(){
   }
   function vkey(){
     var v=ui.view;
-    return v+'|'+(v==='month'?ui.sel.slice(0,7):(v==='week'||v==='review')?startOfWeek(ui.sel):v==='day'?ui.sel:'');
+    return v+'|'+(v==='review'&&ui.rv==='insights'?'ins'+ui.ir:v==='month'?ui.sel.slice(0,7):(v==='week'||v==='review')?startOfWeek(ui.sel):v==='day'?ui.sel:'');
   }
   function stagger(root){
     $$('.cell',root).forEach(function(e,i){e.style.setProperty('--i',(i/7|0)+i%7)});

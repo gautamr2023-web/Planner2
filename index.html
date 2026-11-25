@@ -3715,7 +3715,7 @@ window.addEventListener('focus',dayTick);
   loadTimer();renderTimer();
   connect();
 })();
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))window.addEventListener('load',function(){var had=!!navigator.serviceWorker.controller,shown=0;navigator.serviceWorker.addEventListener('controllerchange',function(){if(had&&!shown){shown=1;toast('A new version of the planner is ready.',null,'Reload',function(){location.reload()})}});navigator.serviceWorker.register('sw.js').catch(function(){})});
 })();
 </script>
 
